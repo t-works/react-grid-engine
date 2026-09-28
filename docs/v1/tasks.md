@@ -52,10 +52,10 @@ Each feature **depends on** the one above it; do not start a box before its depe
 - [x] **05 — Splitters**
   - [x] 0.05 weight floor per side; exact fill after resize
   - [x] Pointer Events only; no `ResizeObserver`
-- [ ] **06 — Drag layer**
-  - [ ] 5 zones + preview; outer border resolves to underlying edge
-  - [ ] reorder; tabify + source collapse; edge split 50/50; `Esc` cancels
-  - [ ] no live relayout on `pointermove`; no `mousedown`/`mousemove`
+- [x] **06 — Drag layer**
+  - [x] 5 zones + preview; outer border resolves to underlying edge
+  - [x] reorder; tabify + source collapse; edge split 50/50; `Esc` cancels
+  - [x] no live relayout on `pointermove`; no `mousedown`/`mousemove`
 - [ ] **07 — Tab menu, add/close guards**
   - [ ] `+` always rendered, filtered by `addable`, disabled when none
   - [ ] §9.7 `canClose` false aborts; rejection → force close

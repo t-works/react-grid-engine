@@ -7,6 +7,7 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
   return (
     <div
       role="tablist"
+      data-twge-titlebar={container.id}
       style={{
         display: 'flex',
         alignItems: 'stretch',
@@ -16,6 +17,10 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
         color: chrome('titlebar-fg', '#374151'),
         borderBottom: `${chrome('border-width', '1px')} solid ${chrome('border-color', '#d4d4d4')}`,
         overflow: 'hidden',
+        // The title bar is the container's drag handle (FR-8): touch scroll and
+        // text selection would otherwise fight the drag.
+        touchAction: 'none',
+        userSelect: 'none',
       }}
     >
       {container.tabs.map((tab) => {
@@ -27,6 +32,7 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
             type="button"
             role="tab"
             id={tabDomId(tab.id)}
+            data-twge-tab-id={tab.id}
             aria-selected={active}
             aria-controls={panelDomId(tab.id)}
             tabIndex={active ? 0 : -1}
@@ -43,6 +49,8 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
               color: 'inherit',
               font: 'inherit',
               cursor: 'pointer',
+              touchAction: 'none',
+              userSelect: 'none',
             }}
           >
             {label}

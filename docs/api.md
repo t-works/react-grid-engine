@@ -169,6 +169,12 @@ There is **no host-edge drop zone** — the outer border/gap is chrome, and a dr
 resolves to the container edge underneath it. Dropping a container into its own subtree,
 or a container's only tab onto its own edge, is a no-op. Edge splits start at 50/50.
 
+Dragging shows a **preview**, never a live relayout: `pointermove` draws an overlay (the
+target container for a center drop, the new container's region for an edge drop) and the
+layout is committed once, on release. `Esc` cancels — the prior layout is still in place.
+Pointer Events only (`setPointerCapture`, `touch-action: none`), so mouse and touch work by
+construction.
+
 ---
 
 ## Registry and tab components
@@ -300,6 +306,8 @@ carries none of them.
 | `--twge-tab-bg` | inactive tab background (also the `color-mix` base) |
 | `--twge-tab-active-bg` | active tab background |
 | `--twge-tab-accent` | theme default accent — "no color" |
+| `--twge-drop-bg` | drop-preview fill |
+| `--twge-drop-border-color` | drop-preview outline |
 | `--twge-tab-color-<name>` | built-in preset swatches (e.g. `--twge-tab-color-red`) |
 
 `color-mix(in oklab, …)` and `<input type="color">` are assumed available (PRD §8).

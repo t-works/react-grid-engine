@@ -18,6 +18,7 @@ import { parseLayout } from './layout/serialize';
 import {
   addTab as addTabOp,
   focusTab as focusTabOp,
+  moveContainer as moveContainerOp,
   moveTab as moveTabOp,
   removeTab as removeTabOp,
   resizeSplit as resizeSplitOp,
@@ -29,6 +30,8 @@ import type { ChromeCtx } from './chrome/Container';
 import { Container } from './chrome/Container';
 import { Split } from './chrome/Split';
 import { Splitter } from './chrome/Splitter';
+import { chrome } from './chrome/styles';
+import { useDrag } from './dnd/useDrag';
 
 /** Props of the engine root. Callbacks are opt-in; no state is pushed back in. */
 export interface GridEngineProps {
@@ -116,6 +119,18 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
   const engine = engineRef.current;
   useImperativeHandle(ref, () => engine, []);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const drag = useDrag(rootRef, {
+    onDropTab: (tabId, target) => engine.moveTab(tabId, target),
+    onDropContainer: (containerId, target) => {
+      commit(
+        moveContainerOp(layoutRef.current, containerId, target, {
+          newSplitId: target.kind === 'split' ? createId() : undefined,
+        }),
+      );
+    },
+  });
+
   const ctx: ChromeCtx = {
     registry,
     engine,
@@ -129,8 +144,11 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
 
   return (
     <div
+      ref={rootRef}
+      {...drag.handlers}
       className={className}
       style={{
+        position: 'relative',
         width: '100%',
         height: '100%',
         display: 'flex',
@@ -140,6 +158,19 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
       }}
     >
       <NodeView node={layout.root} ctx={ctx} />
+      {drag.preview && (
+        <div
+          data-twge-drop-preview
+          style={{
+            position: 'absolute',
+            pointerEvents: 'none',
+            boxSizing: 'border-box',
+            background: chrome('drop-bg', 'rgba(59, 130, 246, 0.12)'),
+            border: `${chrome('border-width', '1px')} dashed ${chrome('drop-border-color', '#3b82f6')}`,
+            ...drag.preview,
+          }}
+        />
+      )}
     </div>
   );
 });

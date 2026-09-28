@@ -31,6 +31,7 @@ export interface ChromeCtx {
 export function Container({ container, ctx }: { container: ContainerNode; ctx: ChromeCtx }) {
   return (
     <div
+      data-twge-container={container.id}
       style={{
         ...grow(container.weight),
         display: 'flex',
