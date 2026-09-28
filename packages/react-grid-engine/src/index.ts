@@ -1,6 +1,7 @@
 export type { Layout, Node, SplitNode, ContainerNode, Tab } from './layout/types';
 export type {
   DropTarget,
+  SplitEdge,
   LayoutAction,
   LayoutChangeMeta,
   LayoutChangeHandler,

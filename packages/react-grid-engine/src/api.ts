@@ -7,12 +7,15 @@
 
 import type { Layout } from './layout/types';
 
+/** A side of a container where a split can be created. */
+export type SplitEdge = 'left' | 'right' | 'top' | 'bottom';
+
 /** Where a tab or container can be dropped. */
 export type DropTarget =
   /** Tabify: join this container's tabs. `index` omitted = append. */
   | { kind: 'tab'; containerId: string; index?: number }
   /** Split this container on `edge`, creating a new 50/50 sibling. */
-  | { kind: 'split'; containerId: string; edge: 'left' | 'right' | 'top' | 'bottom' }
+  | { kind: 'split'; containerId: string; edge: SplitEdge }
   /** Empty layout only. */
   | { kind: 'root' };
 

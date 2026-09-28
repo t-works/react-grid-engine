@@ -107,9 +107,11 @@ interface GridEngineHandle {
 ## `DropTarget`
 
 ```ts
+type SplitEdge = 'left' | 'right' | 'top' | 'bottom';
+
 type DropTarget =
   | { kind: 'tab'; containerId: string; index?: number }   // tabify; index omitted = append
-  | { kind: 'split'; containerId: string; edge: 'left' | 'right' | 'top' | 'bottom' }
+  | { kind: 'split'; containerId: string; edge: SplitEdge }
   | { kind: 'root' };                                      // empty layout only
 ```
 

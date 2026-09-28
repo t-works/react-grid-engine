@@ -35,10 +35,10 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] `Layout`/`Node`/`Tab`, `DropTarget`, `GridEngineHandle`, `PanelComponentDef`/`Props`, 4 payloads
   - [x] every §9 criterion written against the frozen types
   - [x] `api.md` has `--twge-*` table + `Panel*` naming note; reviewed vs PRD §5.1/§5.2/§6.5
-- [ ] **02 — Layout reducer** — pure tree ops, invariants
-  - [ ] split ≥ 2, single-child splice, last-tab collapse, empty-root exception
-  - [ ] no-ops: own-subtree drop; only tab on own edge
-  - [ ] config order `config → createConfig → defaultConfig → {}`; per-tab independence
+- [x] **02 — Layout reducer** — pure tree ops, invariants
+  - [x] split ≥ 2, single-child splice, last-tab collapse, empty-root exception
+  - [x] no-ops: own-subtree drop; only tab on own edge
+  - [x] config order `config → createConfig → defaultConfig → {}`; per-tab independence
 - [ ] **03 — Serialization** — round-trip, migration, repair
   - [ ] valid round-trip identity
   - [ ] unknown field dropped; future `version` → warn + `defaultLayout`
