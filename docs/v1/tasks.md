@@ -49,9 +49,9 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] 100%×100% fill; content overflow scrolls inside; no stylesheet
   - [x] tablist/tab/tabpanel + aria; missing-key placeholder survives round-trip
   - [x] `keepMountedWhenInactive`; import-safe without a DOM
-- [ ] **05 — Splitters**
-  - [ ] 0.05 weight floor per side; exact fill after resize
-  - [ ] Pointer Events only; no `ResizeObserver`
+- [x] **05 — Splitters**
+  - [x] 0.05 weight floor per side; exact fill after resize
+  - [x] Pointer Events only; no `ResizeObserver`
 - [ ] **06 — Drag layer**
   - [ ] 5 zones + preview; outer border resolves to underlying edge
   - [ ] reorder; tabify + source collapse; edge split 50/50; `Esc` cancels

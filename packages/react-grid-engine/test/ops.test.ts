@@ -262,6 +262,50 @@ describe('resizeSplit / focusContainer', () => {
     expect((out.root as SplitNode).children[0]?.weight).toBe(MIN_WEIGHT);
   });
 
+  test('the sibling absorbs the difference, so the pair total is unchanged', () => {
+    const out = resizeSplit(rowAB, 's1', 0, 1.5);
+    const kids = (out.root as SplitNode).children;
+    expect(kids.map((c) => c.weight)).toEqual([1.5, 0.5]);
+  });
+
+  test('both sides of the pair are floored, others are untouched', () => {
+    const three = layoutOf(
+      split('s1', 'row', [
+        container('A', ['a1'], { weight: 1 }),
+        container('B', ['b1'], { weight: 1 }),
+        container('C', ['c1'], { weight: 1 }),
+      ]),
+      'A',
+    );
+
+    const far = resizeSplit(three, 's1', 0, 99);
+    const farKids = (far.root as SplitNode).children;
+    expect(farKids[0]?.weight).toBeCloseTo(2 - MIN_WEIGHT);
+    expect(farKids[1]?.weight).toBeCloseTo(MIN_WEIGHT);
+    expect(farKids[2]?.weight).toBe(1);
+
+    const near = resizeSplit(three, 's1', 0, -99);
+    const nearKids = (near.root as SplitNode).children;
+    expect(nearKids[0]?.weight).toBeCloseTo(MIN_WEIGHT);
+    expect(nearKids[1]?.weight).toBeCloseTo(2 - MIN_WEIGHT);
+    expect(nearKids[2]?.weight).toBe(1);
+  });
+
+  test('a resize that changes nothing returns the same layout', () => {
+    expect(resizeSplit(rowAB, 's1', 0, 1)).toBe(rowAB);
+  });
+
+  test('a pair with no room to move is left alone', () => {
+    const squeezed = layoutOf(
+      split('s1', 'row', [
+        container('A', ['a1'], { weight: MIN_WEIGHT }),
+        container('B', ['b1'], { weight: MIN_WEIGHT }),
+      ]),
+      'A',
+    );
+    expect(resizeSplit(squeezed, 's1', 0, 0.5)).toBe(squeezed);
+  });
+
   test('unknown split or index is a no-op', () => {
     expect(resizeSplit(rowAB, 'nope', 0, 1)).toBe(rowAB);
     expect(resizeSplit(rowAB, 's1', 9, 1)).toBe(rowAB);

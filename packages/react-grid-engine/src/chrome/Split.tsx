@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import type { SplitNode } from '../layout/types';
-import { chrome, grow } from './styles';
+import { grow } from './styles';
 
-/** Internal node — lays its children out along `axis`. Splitters arrive in 05. */
+/** Internal node — lays its children out along `axis`. The gap between them is
+ * the {@link Splitter} handle, so no flex `gap` here. */
 export function Split({
   axis,
   weight,
@@ -18,7 +19,6 @@ export function Split({
         ...grow(weight),
         display: 'flex',
         flexDirection: axis === 'row' ? 'row' : 'column',
-        gap: chrome('gap', '4px'),
         overflow: 'hidden',
       }}
     >

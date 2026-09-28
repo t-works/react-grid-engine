@@ -20,6 +20,11 @@ export interface ChromeCtx {
   onTabConfigChange: TabConfigChangeHandler | undefined;
   /** Current config revision for a tab (§5.2). */
   getRev: (tabId: string) => number;
+  /**
+   * Splitter drag: give `children[index]` of the split the requested absolute
+   * weight; its next sibling absorbs the difference (FR-7). Committed live.
+   */
+  resize: (splitId: string, index: number, weight: number) => void;
 }
 
 /** Leaf node — title bar + content box; owns a rect and a set of tabs. */

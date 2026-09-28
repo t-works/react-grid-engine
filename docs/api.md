@@ -293,9 +293,9 @@ carries none of them.
 | `--twge-titlebar-height` | title-bar height |
 | `--twge-titlebar-bg` | title-bar background |
 | `--twge-titlebar-fg` | title-bar text color |
-| `--twge-border-color` | container borders and splitter lines |
-| `--twge-border-width` | border / splitter thickness |
-| `--twge-gap` | gap between adjacent containers |
+| `--twge-border-color` | container borders |
+| `--twge-border-width` | container border thickness |
+| `--twge-gap` | gap between adjacent containers — this is also the draggable splitter handle |
 | `--twge-padding` | inset padding around a container's content box |
 | `--twge-tab-bg` | inactive tab background (also the `color-mix` base) |
 | `--twge-tab-active-bg` | active tab background |
@@ -303,6 +303,11 @@ carries none of them.
 | `--twge-tab-color-<name>` | built-in preset swatches (e.g. `--twge-tab-color-red`) |
 
 `color-mix(in oklab, …)` and `<input type="color">` are assumed available (PRD §8).
+
+Splitters are the gap itself: dragging one resizes the two adjacent siblings and the
+sibling absorbs the difference, so the parent keeps filling exactly. Weights stay relative —
+the clamp is a `0.05` weight floor per side, never a pixel measurement or `ResizeObserver`
+(FR-7 / A3). Keyboard resize is a v2 item.
 
 ---
 

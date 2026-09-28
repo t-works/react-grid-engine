@@ -4,7 +4,7 @@
  * (D9). No DOM access at module scope; ids are minted in handlers, never during
  * render (FR-19).
  */
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, Fragment, useImperativeHandle, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type {
   GridEngineHandle,
@@ -20,6 +20,7 @@ import {
   focusTab as focusTabOp,
   moveTab as moveTabOp,
   removeTab as removeTabOp,
+  resizeSplit as resizeSplitOp,
   resolveNewTabConfig,
   setTabConfig as setTabConfigOp,
   updateTab as updateTabOp,
@@ -27,6 +28,7 @@ import {
 import type { ChromeCtx } from './chrome/Container';
 import { Container } from './chrome/Container';
 import { Split } from './chrome/Split';
+import { Splitter } from './chrome/Splitter';
 
 /** Props of the engine root. Callbacks are opt-in; no state is pushed back in. */
 export interface GridEngineProps {
@@ -58,11 +60,11 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
   const revsRef = useRef(new Map<string, number>());
 
   const engineRef = useRef<GridEngineHandle | null>(null);
+  const commit = (next: Layout): void => {
+    layoutRef.current = next;
+    setLayout(next);
+  };
   if (engineRef.current === null) {
-    const commit = (next: Layout): void => {
-      layoutRef.current = next;
-      setLayout(next);
-    };
     engineRef.current = {
       addTab(p) {
         const tab: Tab = {
@@ -120,6 +122,9 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
     onTabEvent,
     onTabConfigChange,
     getRev: (tabId) => revsRef.current.get(tabId) ?? 0,
+    resize: (splitId, index, weight) => {
+      commit(resizeSplitOp(layoutRef.current, splitId, index, weight));
+    },
   };
 
   return (
@@ -143,8 +148,11 @@ function NodeView({ node, ctx }: { node: Node; ctx: ChromeCtx }) {
   if (node.type === 'container') return <Container container={node} ctx={ctx} />;
   return (
     <Split axis={node.axis} weight={node.weight}>
-      {node.children.map((child) => (
-        <NodeView key={child.id} node={child} ctx={ctx} />
+      {node.children.map((child, i) => (
+        <Fragment key={child.id}>
+          {i > 0 && <Splitter split={node} index={i - 1} onResize={ctx.resize} />}
+          <NodeView node={child} ctx={ctx} />
+        </Fragment>
       ))}
     </Split>
   );

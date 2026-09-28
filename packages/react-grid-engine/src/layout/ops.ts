@@ -367,17 +367,46 @@ export function splitContainer(layout: Layout, params: SplitParams): Layout {
   return normalize({ ...layout, root, activeContainerId: params.incoming.id });
 }
 
+/** Effective weight — absent, non-finite or non-positive counts as 1 (mirrors render). */
+export function weightOf(node: Node): number {
+  const w = node.weight;
+  return typeof w === 'number' && Number.isFinite(w) && w > 0 ? w : 1;
+}
+
+/**
+ * Splitter drag: give `children[childIndex]` the requested absolute `weight`
+ * and let its next sibling absorb the difference, so the *pair's* total — and
+ * with it every other sibling's share — is unchanged (FR-7). Both sides keep at
+ * least {@link MIN_WEIGHT}; a pair narrower than that cannot move and is left
+ * alone. Weights stay relative: no pixels, no `ResizeObserver` (A3).
+ */
 export function resizeSplit(layout: Layout, splitId: string, childIndex: number, weight: number): Layout {
   const split = findSplit(layout.root, splitId);
-  if (!split || childIndex < 0 || childIndex >= split.children.length) return layout;
+  const left = split?.children[childIndex];
+  if (!split || !left || !Number.isFinite(weight)) return layout;
+
+  const right = split.children[childIndex + 1];
+  let nextLeft: number;
+  let nextRight: number | undefined;
+  if (right) {
+    const total = weightOf(left) + weightOf(right);
+    if (total < MIN_WEIGHT * 2) return layout;
+    nextLeft = Math.min(Math.max(weight, MIN_WEIGHT), total - MIN_WEIGHT);
+    nextRight = total - nextLeft;
+  } else {
+    nextLeft = Math.max(MIN_WEIGHT, weight);
+  }
+  if (nextLeft === weightOf(left)) return layout;
 
   const root = updateNode(layout.root, splitId, (node) => {
     const current = node as SplitNode;
     return {
       ...current,
-      children: current.children.map((child, i) =>
-        i === childIndex ? { ...child, weight: Math.max(MIN_WEIGHT, weight) } : child,
-      ),
+      children: current.children.map((child, i) => {
+        if (i === childIndex) return { ...child, weight: nextLeft };
+        if (nextRight !== undefined && i === childIndex + 1) return { ...child, weight: nextRight };
+        return child;
+      }),
     };
   });
   return { ...layout, root };

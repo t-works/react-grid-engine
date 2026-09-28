@@ -1,13 +1,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { GridEngine, parseLayout, serializeLayout } from '../src/index';
+import { MIN_WEIGHT } from '../src/layout/ops';
 import type {
   GridEngineHandle,
   Layout,
   PanelComponentDef,
   PanelComponentProps,
   PanelRegistry,
+  SplitNode,
 } from '../src/index';
 
 // --- fixtures ----------------------------------------------------------------
@@ -141,5 +143,83 @@ describe('static render (task 04)', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'B' }));
     expect(screen.getByRole('tabpanel', { name: 'B' }).id).toBe('twge-panel-b');
     expect(screen.getByRole('tab', { name: 'B' }).getAttribute('aria-selected')).toBe('true');
+  });
+});
+
+// --- splitters (task 05) -----------------------------------------------------
+
+const childWeights = (handle: GridEngineHandle): (number | undefined)[] =>
+  (handle.getLayout().root as SplitNode).children.map((child) => child.weight);
+
+describe('splitters (task 05)', () => {
+  // jsdom has no PointerEvent; MouseEvent supplies clientX and lets the test
+  // carry `pointerId`.
+  beforeEach(() => vi.stubGlobal('PointerEvent', MouseEvent));
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const rect = (width: number, height: number): DOMRect =>
+    ({
+      width,
+      height,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+
+  test('one separator per sibling gap; pointer-only and scroll-free', () => {
+    mount();
+    const separators = screen.getAllByRole('separator');
+    expect(separators).toHaveLength(1);
+    expect(separators[0]?.getAttribute('aria-orientation')).toBe('vertical');
+    expect(separators[0]?.style.touchAction).toBe('none');
+    expect(separators[0]?.style.cursor).toBe('col-resize');
+  });
+
+  test('pointer drag resizes the pair, clamps to the 0.05 floor, keeps 100% fill', () => {
+    const capture = vi.fn();
+    const release = vi.fn();
+    Element.prototype.setPointerCapture = capture;
+    Element.prototype.releasePointerCapture = release;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(rect(1000, 500));
+
+    const ref = { current: null as GridEngineHandle | null };
+    render(
+      <StrictMode>
+        <GridEngine ref={ref} defaultLayout={layout} registry={registry} />
+      </StrictMode>,
+    );
+    const separator = screen.getByRole('separator');
+
+    // Legacy mouse input must not resize anything (Pointer Events only).
+    fireEvent.mouseDown(separator, { clientX: 500 });
+    fireEvent.mouseMove(separator, { clientX: 900 });
+    expect(childWeights(ref.current!)).toEqual([1, 1]);
+
+    fireEvent.pointerDown(separator, { pointerId: 1, clientX: 500 });
+    expect(capture).toHaveBeenCalled();
+    fireEvent.pointerMove(separator, { pointerId: 1, clientX: 700 });
+    const moved = childWeights(ref.current!).map((w) => w ?? 1);
+    expect(moved[0]).toBeCloseTo(1.4);
+    expect(moved[1]).toBeCloseTo(0.6);
+
+    // Past the floor: the dragged side stops at 0.05, the sibling keeps the rest.
+    fireEvent.pointerMove(separator, { pointerId: 1, clientX: 9999 });
+    const weights = childWeights(ref.current!).map((w) => w ?? 1);
+    expect(weights[0]).toBeCloseTo(2 - MIN_WEIGHT);
+    expect(weights[1]).toBeCloseTo(MIN_WEIGHT);
+
+    // The pair still sums to its starting total, so the parent fills exactly.
+    const shares = weights.map((w) => w / weights.reduce((a, b) => a + b, 0));
+    expect(shares.reduce((a, b) => a + b, 0)).toBe(1);
+
+    fireEvent.pointerUp(separator, { pointerId: 1 });
+    expect(release).toHaveBeenCalled();
   });
 });
