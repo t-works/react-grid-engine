@@ -71,6 +71,35 @@ interface Tab {
 
 ---
 
+## Serialization
+
+```ts
+const CURRENT_LAYOUT_VERSION = 1;
+
+function parseLayout(
+  input: unknown,               // JSON string or already-parsed value
+  defaultLayout: Layout,
+  warn?: (message: string) => void,
+): Layout;
+
+function serializeLayout(layout: Layout): string;
+```
+
+Reading **never throws** and **never mints ids** — ids in the JSON are authoritative:
+
+- Unknown fields are **dropped** on read; `serializeLayout` emits only wire fields, never chrome.
+- A **structural violation** — bad node shape, a split with fewer than two children, a non-root
+  empty container, a tab without `id`/`component`, nesting beyond the depth guard — warns and
+  returns a copy of `defaultLayout`. Structural damage discards the workspace.
+- A **dangling reference** is repaired instead, and the rest of the layout survives: `activeTabId`
+  → that container's first tab, `activeContainerId` → first container in tree order. An *absent*
+  `activeContainerId` stays absent (it is optional); a present-but-dangling one is rewritten.
+- A **future `version`** is unknown input — it warns and falls back like any other invalid payload.
+- `warn` defaults to `console.warn` with a `[react-grid-engine]` prefix; pass a sink to capture or
+  silence it. Successful reads warn about nothing.
+
+---
+
 ## `GridEngineHandle`
 
 A stable, action-only bundle — no state, no subscription. The host gets it from the ref;

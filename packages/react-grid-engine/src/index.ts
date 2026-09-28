@@ -15,3 +15,7 @@ export type {
   GridEngineHandle,
 } from './api';
 export type { PanelComponentProps, PanelComponentDef } from './registry';
+
+export { parseLayout, serializeLayout } from './layout/serialize';
+export type { WarnFn } from './layout/serialize';
+export { CURRENT_LAYOUT_VERSION } from './layout/migrate';

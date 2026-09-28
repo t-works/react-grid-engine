@@ -39,11 +39,11 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] split ≥ 2, single-child splice, last-tab collapse, empty-root exception
   - [x] no-ops: own-subtree drop; only tab on own edge
   - [x] config order `config → createConfig → defaultConfig → {}`; per-tab independence
-- [ ] **03 — Serialization** — round-trip, migration, repair
-  - [ ] valid round-trip identity
-  - [ ] unknown field dropped; future `version` → warn + `defaultLayout`
-  - [ ] structural violation → `defaultLayout`; dangling ids repaired, workspace survives
-  - [ ] hostile JSON never throws
+- [x] **03 — Serialization** — round-trip, migration, repair
+  - [x] valid round-trip identity
+  - [x] unknown field dropped; future `version` → warn + `defaultLayout`
+  - [x] structural violation → `defaultLayout`; dangling ids repaired, workspace survives
+  - [x] hostile JSON never throws
 - [ ] **04 — Static render + chrome**
   - [ ] StrictMode: no legacy warnings, no NaN weights
   - [ ] 100%×100% fill; content overflow scrolls inside; no stylesheet
