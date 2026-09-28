@@ -100,6 +100,27 @@ Reading **never throws** and **never mints ids** — ids in the JSON are authori
 
 ---
 
+## `<GridEngine>`
+
+The engine root. The layout is **uncontrolled**: `defaultLayout` is parsed and normalized once, on
+mount; every later write goes through the ref handle (no controlled `layout` prop).
+
+```tsx
+<GridEngine
+  ref={engineRef}                     // GridEngineHandle
+  defaultLayout={layout}              // Layout — read once, on mount
+  registry={registry}                 // Record<string, PanelComponentDef> — never serialized
+  onTabEvent={(tabId, type, payload) => {}}          // optional
+  onTabConfigChange={(tabId, config, meta) => {}}    // optional
+  className="workspace"
+  style={{ height: '100vh' }}
+/>
+```
+
+The root fills its host 100% × 100% and carries no stylesheet: a container's title bar, borders,
+gaps, padding and tab colors all read `--twge-*` variables (defaults below). A `component` key
+missing from the registry renders a placeholder and the tab node is retained.
+
 ## `GridEngineHandle`
 
 A stable, action-only bundle — no state, no subscription. The host gets it from the ref;

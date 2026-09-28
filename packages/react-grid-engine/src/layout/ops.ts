@@ -8,7 +8,7 @@
  */
 
 import type { ContainerNode, Layout, Node, SplitNode, Tab } from './types';
-import type { DropTarget, SplitEdge } from '../api';
+import type { DropTarget, SplitEdge, UpdateTabPatch } from '../api';
 import type { PanelComponentDef } from '../registry';
 
 /** Relative weight floor per side (FR-7 / A3). */
@@ -244,6 +244,45 @@ export function reorderTab(layout: Layout, tabId: string, toIndex: number): Layo
   return { ...layout, root };
 }
 
+/** Patch a tab's node-level fields. `color: null` clears, `undefined` leaves. */
+export function updateTab(layout: Layout, tabId: string, patch: UpdateTabPatch): Layout {
+  const location = findTab(layout.root, tabId);
+  if (!location) return layout;
+  return withContainer(layout, location.container.id, (container) => ({
+    ...container,
+    tabs: container.tabs.map((tab) => {
+      if (tab.id !== tabId) return tab;
+      const next: Tab = { ...tab };
+      if (patch.title !== undefined) next.title = patch.title;
+      if (patch.color === null) delete next.color;
+      else if (patch.color !== undefined) next.color = patch.color;
+      return next;
+    }),
+  }));
+}
+
+/** Replace a tab's opaque config. Unknown tab id is a no-op. */
+export function setTabConfig(layout: Layout, tabId: string, config: unknown): Layout {
+  const location = findTab(layout.root, tabId);
+  if (!location) return layout;
+  return withContainer(layout, location.container.id, (container) => ({
+    ...container,
+    tabs: container.tabs.map((tab) => (tab.id === tabId ? { ...tab, config } : tab)),
+  }));
+}
+
+/** Make `tabId` its container's active tab and focus that container. */
+export function focusTab(layout: Layout, tabId: string): Layout {
+  const location = findTab(layout.root, tabId);
+  if (!location) return layout;
+  const { container } = location;
+  const root = updateNode(layout.root, container.id, (node) => ({
+    ...(node as ContainerNode),
+    activeTabId: tabId,
+  }));
+  return { ...layout, root, activeContainerId: container.id };
+}
+
 export function moveTab(layout: Layout, tabId: string, target: DropTarget, ids: MoveIds = {}): Layout {
   const location = findTab(layout.root, tabId);
   if (!location) return layout;
@@ -367,6 +406,10 @@ export function resolveNewTabConfig(
 }
 
 // --- tree plumbing -----------------------------------------------------------
+
+function withContainer(layout: Layout, id: string, fn: (container: ContainerNode) => ContainerNode): Layout {
+  return { ...layout, root: updateNode(layout.root, id, (node) => fn(node as ContainerNode)) };
+}
 
 function updateNode(node: Node, id: string, fn: (node: Node) => Node): Node {
   if (node.id === id) return fn(node);

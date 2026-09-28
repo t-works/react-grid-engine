@@ -8,6 +8,7 @@ import {
   findTab,
   firstContainer,
   focusContainer,
+  focusTab,
   isEmptyLayout,
   MIN_WEIGHT,
   moveContainer,
@@ -17,7 +18,9 @@ import {
   removeTab,
   resizeSplit,
   resolveNewTabConfig,
+  setTabConfig,
   splitContainer,
+  updateTab,
 } from '../src/layout/ops';
 import type {
   ContainerNode,
@@ -267,6 +270,34 @@ describe('resizeSplit / focusContainer', () => {
   test('focus sets a known container, ignores an unknown one', () => {
     expect(focusContainer(rowAB, 'B').activeContainerId).toBe('B');
     expect(focusContainer(rowAB, 'ghost')).toBe(rowAB);
+  });
+});
+
+// --- tab patches -------------------------------------------------------------
+
+describe('updateTab / setTabConfig / focusTab', () => {
+  test('patch merges title/color; null clears color, undefined leaves it', () => {
+    const coloured = updateTab(twoTabs, 'a1', { title: 'One', color: '#e11' });
+    expect(findTab(coloured.root, 'a1')?.tab).toMatchObject({ title: 'One', color: '#e11' });
+
+    const cleared = updateTab(coloured, 'a1', { color: null });
+    expect(findTab(cleared.root, 'a1')?.tab.color).toBeUndefined();
+    expect(findTab(cleared.root, 'a1')?.tab.title).toBe('One');
+
+    expect(updateTab(coloured, 'a1', {})).toEqual(coloured);
+    expect(updateTab(twoTabs, 'ghost', { title: 'x' })).toBe(twoTabs);
+  });
+
+  test('setTabConfig replaces the opaque config', () => {
+    expect(findTab(setTabConfig(twoTabs, 'a1', { v: 2 }).root, 'a1')?.tab.config).toEqual({ v: 2 });
+    expect(setTabConfig(twoTabs, 'ghost', {})).toBe(twoTabs);
+  });
+
+  test('focusTab activates the tab and its container', () => {
+    const out = focusTab(twoTabs, 'a2');
+    expect(out.activeContainerId).toBe('A');
+    expect(findContainer(out.root, 'A')?.activeTabId).toBe('a2');
+    expect(focusTab(twoTabs, 'ghost')).toBe(twoTabs);
   });
 });
 

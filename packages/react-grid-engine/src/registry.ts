@@ -23,6 +23,12 @@ export interface PanelComponentProps<C = unknown> {
 }
 
 /**
+ * App-supplied catalogue: registry key -> tab component definition. Never
+ * serialized; may be larger or smaller than the layout (FR-16).
+ */
+export type PanelRegistry = Record<string, PanelComponentDef>;
+
+/**
  * A *tab component* definition.
  *
  * The default `C = any` is deliberate: a registry mixes entries with different

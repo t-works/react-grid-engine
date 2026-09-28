@@ -1,0 +1,151 @@
+/**
+ * The engine root (PRD §5.1). The layout is **uncontrolled**: `defaultLayout`
+ * in, writes through the ref handle. Renders inline styles only — no stylesheet
+ * (D9). No DOM access at module scope; ids are minted in handlers, never during
+ * render (FR-19).
+ */
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import type {
+  GridEngineHandle,
+  TabConfigChangeHandler,
+  TabEventHandler,
+} from './api';
+import type { Node, Layout, Tab } from './layout/types';
+import type { PanelRegistry } from './registry';
+import { createId } from './ids';
+import { parseLayout } from './layout/serialize';
+import {
+  addTab as addTabOp,
+  focusTab as focusTabOp,
+  moveTab as moveTabOp,
+  removeTab as removeTabOp,
+  resolveNewTabConfig,
+  setTabConfig as setTabConfigOp,
+  updateTab as updateTabOp,
+} from './layout/ops';
+import type { ChromeCtx } from './chrome/Container';
+import { Container } from './chrome/Container';
+import { Split } from './chrome/Split';
+
+/** Props of the engine root. Callbacks are opt-in; no state is pushed back in. */
+export interface GridEngineProps {
+  /** Read once, on mount. Parsed and normalized. */
+  defaultLayout: Layout;
+  /** App-supplied catalogue, never serialized (FR-16). */
+  registry: PanelRegistry;
+  onTabEvent?: TabEventHandler;
+  onTabConfigChange?: TabConfigChangeHandler;
+  className?: string;
+  style?: CSSProperties;
+}
+
+/** The host gets this via the ref; every tab component gets the same object. */
+export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function GridEngine(
+  { defaultLayout, registry, onTabEvent, onTabConfigChange, className, style },
+  ref,
+) {
+  const [layout, setLayout] = useState<Layout>(() => parseLayout(defaultLayout, defaultLayout));
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
+
+  // Latest props/callbacks, read by the stable handle (created once).
+  const registryRef = useRef(registry);
+  registryRef.current = registry;
+  const callbacksRef = useRef({ onTabEvent, onTabConfigChange });
+  callbacksRef.current = { onTabEvent, onTabConfigChange };
+  /** Monotonic config revision per tab (§5.2). Runtime-only. */
+  const revsRef = useRef(new Map<string, number>());
+
+  const engineRef = useRef<GridEngineHandle | null>(null);
+  if (engineRef.current === null) {
+    const commit = (next: Layout): void => {
+      layoutRef.current = next;
+      setLayout(next);
+    };
+    engineRef.current = {
+      addTab(p) {
+        const tab: Tab = {
+          id: createId(),
+          component: p.component,
+          config: resolveNewTabConfig(registryRef.current, p.component, p.config),
+        };
+        if (p.title !== undefined) tab.title = p.title;
+        if (p.color !== undefined) tab.color = p.color;
+        const splitting = p.target?.kind === 'split';
+        commit(
+          addTabOp(layoutRef.current, tab, {
+            target: p.target,
+            activate: p.activate,
+            newContainerId: splitting ? createId() : undefined,
+            newSplitId: splitting ? createId() : undefined,
+          }),
+        );
+        return tab.id;
+      },
+      removeTab(id) {
+        commit(removeTabOp(layoutRef.current, id));
+      },
+      updateTab(id, patch) {
+        commit(updateTabOp(layoutRef.current, id, patch));
+      },
+      moveTab(id, target) {
+        commit(
+          moveTabOp(layoutRef.current, id, target, {
+            newContainerId: target.kind === 'split' ? createId() : undefined,
+            newSplitId: target.kind === 'split' ? createId() : undefined,
+          }),
+        );
+      },
+      setTabConfig(id, config, rev) {
+        const current = revsRef.current.get(id) ?? 0;
+        if (rev !== undefined && rev <= current) return;
+        revsRef.current.set(id, rev ?? current + 1);
+        commit(setTabConfigOp(layoutRef.current, id, config));
+      },
+      focusTab(id) {
+        commit(focusTabOp(layoutRef.current, id));
+      },
+      getLayout() {
+        return layoutRef.current;
+      },
+    };
+  }
+  const engine = engineRef.current;
+  useImperativeHandle(ref, () => engine, []);
+
+  const ctx: ChromeCtx = {
+    registry,
+    engine,
+    onTabEvent,
+    onTabConfigChange,
+    getRev: (tabId) => revsRef.current.get(tabId) ?? 0,
+  };
+
+  return (
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      <NodeView node={layout.root} ctx={ctx} />
+    </div>
+  );
+});
+
+function NodeView({ node, ctx }: { node: Node; ctx: ChromeCtx }) {
+  if (node.type === 'container') return <Container container={node} ctx={ctx} />;
+  return (
+    <Split axis={node.axis} weight={node.weight}>
+      {node.children.map((child) => (
+        <NodeView key={child.id} node={child} ctx={ctx} />
+      ))}
+    </Split>
+  );
+}

@@ -44,11 +44,11 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] unknown field dropped; future `version` → warn + `defaultLayout`
   - [x] structural violation → `defaultLayout`; dangling ids repaired, workspace survives
   - [x] hostile JSON never throws
-- [ ] **04 — Static render + chrome**
-  - [ ] StrictMode: no legacy warnings, no NaN weights
-  - [ ] 100%×100% fill; content overflow scrolls inside; no stylesheet
-  - [ ] tablist/tab/tabpanel + aria; missing-key placeholder survives round-trip
-  - [ ] `keepMountedWhenInactive`; import-safe without a DOM
+- [x] **04 — Static render + chrome**
+  - [x] StrictMode: no legacy warnings, no NaN weights
+  - [x] 100%×100% fill; content overflow scrolls inside; no stylesheet
+  - [x] tablist/tab/tabpanel + aria; missing-key placeholder survives round-trip
+  - [x] `keepMountedWhenInactive`; import-safe without a DOM
 - [ ] **05 — Splitters**
   - [ ] 0.05 weight floor per side; exact fill after resize
   - [ ] Pointer Events only; no `ResizeObserver`
