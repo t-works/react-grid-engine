@@ -1,0 +1,21 @@
+{
+  "name": "standalone-basic",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@t-works/react-grid-engine": "*",
+    "react": "^18.3",
+    "react-dom": "^18.3"
+  },
+  "devDependencies": {
+    "vite": "^6",
+    "@vitejs/plugin-react": "^4",
+    "typescript": "^5"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  }
+}

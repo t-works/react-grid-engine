@@ -144,3 +144,10 @@ vite.config.ts.timestamp-*
 
 # JetBrains IDE
 .idea/
+
+# Turborepo
+.turbo/
+
+# Playwright
+playwright-report/
+test-results/
