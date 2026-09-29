@@ -27,6 +27,8 @@ interface Session {
   id: string;
   /** Home container of the dragged tab. */
   containerId: string;
+  /** Text shown on the drag sprite. */
+  label: string;
   pointerId: number;
   startX: number;
   startY: number;
@@ -66,9 +68,15 @@ export interface DragResult {
   handlers: DragHandlers;
   /** Root-relative overlay box; `null` when nothing should be drawn. */
   preview: CSSProperties | null;
+  /** Cursor-following label; `null` when not dragging. */
+  sprite: { x: number; y: number; label: string } | null;
 }
 
-const rectOf = (el: Element): Rect => el.getBoundingClientRect();
+/** Viewport rect as a plain object — a `DOMRect` has no own enumerable props. */
+const rectOf = (el: Element): Rect => {
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+};
 
 function overlayStyle(rect: Rect, root: Rect): CSSProperties {
   return {
@@ -82,6 +90,7 @@ function overlayStyle(rect: Rect, root: Rect): CSSProperties {
 export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOptions): DragResult {
   const session = useRef<Session | null>(null);
   const [preview, setPreview] = useState<CSSProperties | null>(null);
+  const [sprite, setSprite] = useState<{ x: number; y: number; label: string } | null>(null);
 
   const finish = (commit: boolean): void => {
     const s = session.current;
@@ -90,6 +99,7 @@ export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOption
     document.removeEventListener('keydown', escapeRef.current);
     rootRef.current?.releasePointerCapture?.(s.pointerId);
     setPreview(null);
+    setSprite(null);
     if (commit && s.active && s.target) {
       if (s.kind === 'tab') opts.onDropTab(s.id, s.target);
       else opts.onDropContainer(s.id, s.target);
@@ -156,13 +166,17 @@ export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOption
 
     let kind: Session['kind'];
     let id: string;
+    let label: string;
     if (tabEl && tabId) {
       kind = 'tab';
       id = tabId;
+      label = tabEl.textContent ?? '';
     } else if (titlebarEl && !target.closest('button')) {
       // Title-bar background drags the whole container (FR-8).
       kind = 'container';
       id = containerId;
+      const selected = titlebarEl.querySelector('[role="tab"][aria-selected="true"]');
+      label = selected?.textContent ?? '';
     } else {
       return;
     }
@@ -175,6 +189,7 @@ export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOption
       kind,
       id,
       containerId,
+      label,
       pointerId: e.pointerId,
       startX: e.clientX,
       startY: e.clientY,
@@ -204,6 +219,7 @@ export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOption
       rootRef.current?.setPointerCapture?.(s.pointerId);
       document.addEventListener('keydown', escapeRef.current);
     }
+    setSprite({ x: e.clientX + 12, y: e.clientY + 8, label: s.label });
 
     const next = resolve(s, e.clientX, e.clientY);
     s.target = next?.target ?? null;
@@ -225,5 +241,6 @@ export function useDrag(rootRef: RefObject<HTMLElement | null>, opts: DragOption
       onPointerCancel: () => finish(false),
     },
     preview,
+    sprite,
   };
 }

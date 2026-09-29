@@ -178,10 +178,12 @@ describe('drag layer (task 06)', () => {
     press(a1);
     move(a1, 750, 300);
     expect(container.querySelector('[data-twge-drop-preview]')).not.toBeNull();
+    expect(container.querySelector('[data-twge-drag-sprite]')?.textContent).toBe('A1');
     expect(JSON.stringify(ref.current!.getLayout())).toBe(before);
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(container.querySelector('[data-twge-drop-preview]')).toBeNull();
+    expect(container.querySelector('[data-twge-drag-sprite]')).toBeNull();
 
     drop(a1, 750, 300);
     expect(JSON.stringify(ref.current!.getLayout())).toBe(before);
@@ -202,6 +204,13 @@ describe('drag layer (task 06)', () => {
     const edge = container.querySelector<HTMLElement>('[data-twge-drop-preview]')!;
     expect(edge.style.left).toBe('750px');
     expect(edge.style.width).toBe('250px');
+
+    move(a1, 750, 597); // bottom edge of B -> bottom half only
+    const bottom = container.querySelector<HTMLElement>('[data-twge-drop-preview]')!;
+    expect(bottom.style.left).toBe('500px');
+    expect(bottom.style.top).toBe('300px');
+    expect(bottom.style.width).toBe('500px');
+    expect(bottom.style.height).toBe('300px');
   });
 
   test('FR-8: a title-bar background drag moves the whole container', () => {

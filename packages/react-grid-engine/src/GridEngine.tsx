@@ -171,6 +171,29 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
           }}
         />
       )}
+      {drag.sprite && (
+        <div
+          data-twge-drag-sprite
+          style={{
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            transform: `translate(${drag.sprite.x}px, ${drag.sprite.y}px)`,
+            pointerEvents: 'none',
+            zIndex: 1000,
+            padding: '4px 10px',
+            borderRadius: 4,
+            background: chrome('tab-active-bg', '#fff'),
+            color: chrome('titlebar-fg', '#374151'),
+            border: `1px solid ${chrome('border-color', '#d4d4d4')}`,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            opacity: 0.9,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {drag.sprite.label}
+        </div>
+      )}
     </div>
   );
 });

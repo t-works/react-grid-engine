@@ -170,10 +170,10 @@ resolves to the container edge underneath it. Dropping a container into its own 
 or a container's only tab onto its own edge, is a no-op. Edge splits start at 50/50.
 
 Dragging shows a **preview**, never a live relayout: `pointermove` draws an overlay (the
-target container for a center drop, the new container's region for an edge drop) and the
-layout is committed once, on release. `Esc` cancels — the prior layout is still in place.
-Pointer Events only (`setPointerCapture`, `touch-action: none`), so mouse and touch work by
-construction.
+target container for a center drop, the new container's region for an edge drop) plus a small
+sprite that follows the pointer, and the layout is committed once, on release. `Esc` cancels —
+the prior layout is still in place. Pointer Events only (`setPointerCapture`, `touch-action: none`),
+so mouse and touch work by construction.
 
 ---
 
