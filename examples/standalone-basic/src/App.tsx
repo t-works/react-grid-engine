@@ -38,10 +38,38 @@ const registry: PanelRegistry = {
   },
 };
 
+// Guard fixtures for the task-07 browser tests, behind `?guards` so the default
+// example keeps its two-component registry.
+const guardRegistry: PanelRegistry = {
+  ...registry,
+  guarded: {
+    component: () => <div style={{ padding: 12 }}>Guarded — close is blocked.</div>,
+    title: () => 'Guarded',
+    canClose: () => false,
+  },
+  unsaved: {
+    component: () => <div style={{ padding: 12 }}>Unsaved — close rejects.</div>,
+    title: () => 'Unsaved',
+    canClose: () => Promise.reject(new Error('unsaved changes')),
+  },
+  single: {
+    component: () => <div style={{ padding: 12 }}>Single — allowMultiple: false.</div>,
+    title: () => 'Single',
+    allowMultiple: false,
+  },
+  locked: {
+    component: () => <div style={{ padding: 12 }}>Locked — not closeable, title fixed.</div>,
+    title: () => 'Locked',
+    closeable: false,
+    titleEditable: false,
+  },
+};
+
 export default function App() {
+  const useGuards = typeof window !== 'undefined' && window.location.search.includes('guards');
   return (
     <div style={{ height: '100vh', fontFamily: 'system-ui' }}>
-      <GridEngine defaultLayout={layout} registry={registry} />
+      <GridEngine defaultLayout={layout} registry={useGuards ? guardRegistry : registry} />
     </div>
   );
 }
