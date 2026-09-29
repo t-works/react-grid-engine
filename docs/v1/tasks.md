@@ -61,11 +61,11 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] §9.7 `canClose` false aborts; rejection → force close
   - [x] close-others/all skip non-closeable + `allowMultiple:false`
   - [x] rename writes `Tab.title`; `titleEditable:false` hides
-- [ ] **08 — Tab color**
-  - [ ] hex validation; invalid ignored + fallthrough (§9.5)
-  - [ ] resolution `tab.color → defaultColor → --twge-tab-accent`; pip + color-mix + underline
-  - [ ] popover swatches / Custom / Default; §9.6 `onTabColorChange` before persistence
-  - [ ] `null` clears, `undefined` does not
+- [x] **08 — Tab color**
+  - [x] hex validation; invalid ignored + fallthrough (§9.5)
+  - [x] resolution `tab.color → defaultColor → --twge-tab-accent`; pip + color-mix + underline
+  - [x] popover swatches / Custom / Default; §9.6 `onTabColorChange` before persistence
+  - [x] `null` clears, `undefined` does not
 - [ ] **09 — Events + `rev` + ref API**
   - [ ] 4 callbacks after commit; `onLayoutChange` once per change + `LayoutAction`
   - [ ] stale `rev` ignored; no echo; revs not serialized

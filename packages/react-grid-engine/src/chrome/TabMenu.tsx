@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ContainerNode, Tab } from '../layout/types';
 import type { PanelComponentDef } from '../registry';
+import { isHexColor, sameColor, TAB_COLOR_PRESETS, toInputHex } from '../color';
 import { listContainers } from '../layout/ops';
 import type { ChromeCtx } from './Container';
 import { chrome } from './styles';
@@ -157,6 +158,27 @@ export function MenuItem({
   );
 }
 
+/** A rendered swatch: app palette entry or themed built-in preset. */
+export interface ColorSwatch {
+  key: string;
+  name: string;
+  hex: string;
+  /** CSS background for the swatch — a hex, or a `--twge-tab-color-*` var. */
+  background: string;
+}
+
+/** App palette (hex-only, filtered) when given, else the themed presets (FR-14). */
+export function colorSwatches(palette: readonly string[] | undefined): ColorSwatch[] {
+  const app = palette?.filter(isHexColor) ?? [];
+  if (app.length > 0) return app.map((hex) => ({ key: hex, name: hex, hex, background: hex }));
+  return TAB_COLOR_PRESETS.map(({ name, hex }) => ({
+    key: name,
+    name,
+    hex,
+    background: `var(--twge-tab-color-${name.toLowerCase()}, ${hex})`,
+  }));
+}
+
 /** The `+` menu: registry keys filtered by `addable` and `allowMultiple` (FR-9). */
 export function AddMenu({
   container,
@@ -206,9 +228,11 @@ export function TabContextMenu({
   const others = uiCloseableTabs(container, ctx, tab.id);
   const all = uiCloseableTabs(container, ctx);
   const [draft, setDraft] = useState(typeof tab.title === 'string' ? tab.title : '');
-  const [renaming, setRenaming] = useState(false);
+  const [mode, setMode] = useState<'menu' | 'rename' | 'color'>('menu');
 
-  if (renaming) {
+  if (mode === 'color') return <ColorMenu tab={tab} ctx={ctx} anchor={anchor} onClose={onClose} />;
+
+  if (mode === 'rename') {
     const commit = (): void => {
       ctx.engine.updateTab(tab.id, { title: draft });
       onClose();
@@ -266,7 +290,78 @@ export function TabContextMenu({
       >
         Close all
       </MenuItem>
-      {def?.titleEditable !== false && <MenuItem onSelect={() => setRenaming(true)}>Rename</MenuItem>}
+      <MenuItem onSelect={() => setMode('color')}>Tab color</MenuItem>
+      {def?.titleEditable !== false && <MenuItem onSelect={() => setMode('rename')}>Rename</MenuItem>}
+    </Popover>
+  );
+}
+
+/**
+ * The tab-color popover (FR-14, PRD §6.4): swatch row + native custom picker +
+ * a Default entry that clears. Keyboard/focus management is v2 (PRD §8).
+ *
+ * Applying commits through the handle first and reports second, so an app that
+ * persists in `onTabColorChange` sees the engine already holding the value.
+ */
+export function ColorMenu({
+  tab,
+  ctx,
+  anchor,
+  onClose,
+}: {
+  tab: Tab;
+  ctx: ChromeCtx;
+  anchor: MenuAnchor;
+  onClose: () => void;
+}) {
+  const swatches = colorSwatches(ctx.tabColorPalette);
+  const apply = (color: string | null, close: boolean): void => {
+    ctx.engine.updateTab(tab.id, { color });
+    ctx.onTabColorChange?.(tab.id, color, { source: 'ui' });
+    if (close) onClose();
+  };
+
+  return (
+    <Popover anchor={anchor} onClose={onClose}>
+      <div
+        role="group"
+        aria-label="Tab color"
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: 6, maxWidth: 196 }}
+      >
+        {swatches.map(({ key, name, hex, background }) => (
+          <button
+            key={key}
+            type="button"
+            role="menuitemradio"
+            aria-checked={sameColor(tab.color, hex)}
+            aria-label={name}
+            title={name}
+            onClick={() => apply(hex, true)}
+            style={{
+              width: 20,
+              height: 20,
+              padding: 0,
+              borderRadius: '50%',
+              border: `${chrome('border-width', '1px')} solid ${chrome('border-color', '#d4d4d4')}`,
+              background,
+              cursor: 'pointer',
+            }}
+          />
+        ))}
+      </div>
+      <label
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px', cursor: 'pointer' }}
+      >
+        Custom…
+        <input
+          type="color"
+          aria-label="Custom color"
+          value={toInputHex(tab.color)}
+          onChange={(e) => apply(e.target.value, false)}
+          style={{ width: 28, height: 20, padding: 0, border: 'none', background: 'none' }}
+        />
+      </label>
+      <MenuItem onSelect={() => apply(null, true)}>Default</MenuItem>
     </Popover>
   );
 }

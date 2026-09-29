@@ -1,6 +1,7 @@
 import type { ContainerNode } from '../layout/types';
 import type {
   GridEngineHandle,
+  TabColorChangeHandler,
   TabConfigChangeHandler,
   TabEventHandler,
 } from '../api';
@@ -18,6 +19,9 @@ export interface ChromeCtx {
   engine: GridEngineHandle;
   onTabEvent: TabEventHandler | undefined;
   onTabConfigChange: TabConfigChangeHandler | undefined;
+  onTabColorChange: TabColorChangeHandler | undefined;
+  /** Swatches the tab-color popover offers; built-in presets when absent. */
+  tabColorPalette: readonly string[] | undefined;
   /** Current config revision for a tab (§5.2). */
   getRev: (tabId: string) => number;
   /**

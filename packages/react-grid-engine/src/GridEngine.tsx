@@ -8,6 +8,7 @@ import { forwardRef, Fragment, useImperativeHandle, useRef, useState } from 'rea
 import type { CSSProperties } from 'react';
 import type {
   GridEngineHandle,
+  TabColorChangeHandler,
   TabConfigChangeHandler,
   TabEventHandler,
 } from './api';
@@ -41,13 +42,25 @@ export interface GridEngineProps {
   registry: PanelRegistry;
   onTabEvent?: TabEventHandler;
   onTabConfigChange?: TabConfigChangeHandler;
+  onTabColorChange?: TabColorChangeHandler;
+  /** Preset swatches for the tab-color popover. Defaults to the themed set. */
+  tabColorPalette?: readonly string[];
   className?: string;
   style?: CSSProperties;
 }
 
 /** The host gets this via the ref; every tab component gets the same object. */
 export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function GridEngine(
-  { defaultLayout, registry, onTabEvent, onTabConfigChange, className, style },
+  {
+    defaultLayout,
+    registry,
+    onTabEvent,
+    onTabConfigChange,
+    onTabColorChange,
+    tabColorPalette,
+    className,
+    style,
+  },
   ref,
 ) {
   const [layout, setLayout] = useState<Layout>(() => parseLayout(defaultLayout, defaultLayout));
@@ -136,6 +149,8 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
     engine,
     onTabEvent,
     onTabConfigChange,
+    onTabColorChange,
+    tabColorPalette,
     getRev: (tabId) => revsRef.current.get(tabId) ?? 0,
     resize: (splitId, index, weight) => {
       commit(resizeSplitOp(layoutRef.current, splitId, index, weight));

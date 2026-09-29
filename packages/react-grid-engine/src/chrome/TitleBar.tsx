@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { ContainerNode, Tab } from '../layout/types';
 import type { ChromeCtx } from './Container';
 import { chrome, panelDomId, tabDomId } from './styles';
+import { resolveTabColor } from '../color';
 import {
   AddMenu,
   addableEntries,
@@ -69,13 +70,25 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
       {container.tabs.map((tab) => {
         const active = tab.id === container.activeTabId;
         const label = labelOf(tab, ctx);
+        // Accent, not fill (FR-13 / PRD §6.3): a pip + active-tab tint +
+        // underline when the tab has an accent; no color = the plain active
+        // background. Text stays theme-controlled.
+        const accent = resolveTabColor(tab.color, ctx.registry[tab.component]?.defaultColor);
         return (
           <div
             key={tab.id}
+            data-twge-tab-wrap={tab.id}
             style={{
               display: 'flex',
               alignItems: 'stretch',
-              background: active ? chrome('tab-active-bg', '#fff') : 'transparent',
+              background: active
+                ? accent
+                  ? `color-mix(in oklab, ${accent} 12%, ${chrome('tab-bg', chrome('tab-active-bg', '#fff'))})`
+                  : chrome('tab-active-bg', '#fff')
+                : 'transparent',
+              boxShadow: active
+                ? `inset 0 -2px 0 0 ${accent ?? chrome('tab-accent', 'transparent')}`
+                : undefined,
               borderRight: `${chrome('border-width', '1px')} solid ${chrome('border-color', '#d4d4d4')}`,
             }}
           >
@@ -108,6 +121,13 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
                 userSelect: 'none',
               }}
             >
+              {accent !== undefined && (
+                <span
+                  data-twge-tab-pip
+                  aria-hidden="true"
+                  style={{ flex: '0 0 auto', width: 6, height: 6, borderRadius: '50%', background: accent }}
+                />
+              )}
               {label}
             </button>
             {isUiCloseable(ctx.registry[tab.component]) && (

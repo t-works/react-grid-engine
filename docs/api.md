@@ -112,6 +112,8 @@ mount; every later write goes through the ref handle (no controlled `layout` pro
   registry={registry}                 // Record<string, PanelComponentDef> — never serialized
   onTabEvent={(tabId, type, payload) => {}}          // optional
   onTabConfigChange={(tabId, config, meta) => {}}    // optional
+  onTabColorChange={(tabId, color, meta) => {}}      // optional — meta.source is 'ui' | 'app'
+  tabColorPalette={['#e11', '#0af']}                 // optional swatches; built-in presets when omitted
   className="workspace"
   style={{ height: '100vh' }}
 />
@@ -273,17 +275,21 @@ Resolution order (first hit wins):
 2. `registry[tab.component].defaultColor`
 3. `--twge-tab-accent`
 
-Rendering is an **accent, not a fill**: a leading pip, plus
-`background: color-mix(in oklab, <color> 12%, var(--twge-tab-bg))` on the active tab, plus
-the accent as the active-tab underline. Tab **text color stays theme-controlled**. Color
-is never the only carrier of meaning. A fill-style mode is deferred (it drags in contrast
-handling).
+Rendering is an **accent, not a fill**: when a tab has an accent, it gets a leading pip,
+`background: color-mix(in oklab, <color> 12%, var(--twge-tab-bg))` on the active tab, and
+the accent as the active-tab underline. With no accent (the `--twge-tab-accent` theme
+default — "no color") there is no pip or tint: the active tab keeps
+`--twge-tab-active-bg`, and `--twge-tab-accent` still paints the underline. Tab **text
+color stays theme-controlled**. Color is never the only carrier of meaning. A fill-style
+mode is deferred (it drags in contrast handling).
 
 The context-menu popover offers the app-supplied `tabColorPalette?: string[]` (or the
 themeable `--twge-tab-color-*` presets), a **Custom…** entry opening the native
 `<input type="color">`, and a **Default** entry that clears `tab.color` by emitting
 `null`. Applying a color updates the UI immediately, then emits `onTabColorChange` and
-`onLayoutChange` — the app owns persistence.
+`onLayoutChange` — the app owns persistence. Palette entries must be hex; non-hex
+values are filtered. The built-in preset swatches read `--twge-tab-color-<name>` for
+their appearance but always emit the built-in hex.
 
 ---
 
