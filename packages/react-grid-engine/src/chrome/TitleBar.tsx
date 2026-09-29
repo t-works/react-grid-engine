@@ -1,9 +1,52 @@
-import type { ContainerNode } from '../layout/types';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
+import type { ContainerNode, Tab } from '../layout/types';
 import type { ChromeCtx } from './Container';
 import { chrome, panelDomId, tabDomId } from './styles';
+import {
+  AddMenu,
+  addableEntries,
+  isUiCloseable,
+  MenuItem,
+  Popover,
+  requestTabClose,
+  TabContextMenu,
+} from './TabMenu';
+import type { MenuAnchor } from './TabMenu';
 
-/** Title bar + tab strip (FR-3). The `+` control and menu arrive in 07. */
+type MenuState =
+  | { kind: 'add'; anchor: MenuAnchor }
+  | { kind: 'tab'; tabId: string; anchor: MenuAnchor }
+  | { kind: 'force'; tabId: string; label: string; anchor: MenuAnchor }
+  | null;
+
+const labelOf = (tab: Tab, ctx: ChromeCtx): ReactNode =>
+  tab.title ?? ctx.registry[tab.component]?.title?.(tab.config) ?? tab.component;
+
+const textLabel = (tab: Tab, ctx: ChromeCtx): string => {
+  const label = tab.title ?? ctx.registry[tab.component]?.title?.(tab.config);
+  return typeof label === 'string' ? label : tab.component;
+};
+
+const anchorOf = (el: Element): MenuAnchor => {
+  const r = el.getBoundingClientRect();
+  return { x: r.left, y: r.bottom };
+};
+
+/** Title bar + tab strip (FR-3): tabs, close controls, the `+` menu (FR-9) and the tab menu. */
 export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: ChromeCtx }) {
+  const [menu, setMenu] = useState<MenuState>(null);
+  const closeMenu = (): void => setMenu(null);
+  const addable = addableEntries(ctx);
+
+  const onCloseTab = async (tab: Tab, anchor: MenuAnchor): Promise<void> => {
+    if ((await requestTabClose(tab, ctx)) === 'rejected') {
+      setMenu({ kind: 'force', tabId: tab.id, label: textLabel(tab, ctx), anchor });
+    }
+  };
+
+  const menuTab = menu?.kind === 'tab' ? container.tabs.find((t) => t.id === menu.tabId) : undefined;
+
   return (
     <div
       role="tablist"
@@ -25,38 +68,125 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
     >
       {container.tabs.map((tab) => {
         const active = tab.id === container.activeTabId;
-        const label = tab.title ?? ctx.registry[tab.component]?.title?.(tab.config) ?? tab.component;
+        const label = labelOf(tab, ctx);
         return (
-          <button
+          <div
             key={tab.id}
-            type="button"
-            role="tab"
-            id={tabDomId(tab.id)}
-            data-twge-tab-id={tab.id}
-            aria-selected={active}
-            aria-controls={panelDomId(tab.id)}
-            tabIndex={active ? 0 : -1}
-            title={typeof label === 'string' ? label : undefined}
-            onClick={() => ctx.engine.focusTab(tab.id)}
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '0 10px',
-              border: 'none',
+              alignItems: 'stretch',
+              background: active ? chrome('tab-active-bg', '#fff') : 'transparent',
               borderRight: `${chrome('border-width', '1px')} solid ${chrome('border-color', '#d4d4d4')}`,
-              background: active ? chrome('tab-active-bg', '#fff') : chrome('tab-bg', 'transparent'),
-              color: 'inherit',
-              font: 'inherit',
-              cursor: 'pointer',
-              touchAction: 'none',
-              userSelect: 'none',
             }}
           >
-            {label}
-          </button>
+            <button
+              type="button"
+              role="tab"
+              id={tabDomId(tab.id)}
+              data-twge-tab-id={tab.id}
+              aria-selected={active}
+              aria-controls={panelDomId(tab.id)}
+              tabIndex={active ? 0 : -1}
+              title={typeof label === 'string' ? label : undefined}
+              onClick={() => ctx.engine.focusTab(tab.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setMenu({ kind: 'tab', tabId: tab.id, anchor: { x: e.clientX, y: e.clientY } });
+              }}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '0 10px',
+                border: 'none',
+                background: 'transparent',
+                color: 'inherit',
+                font: 'inherit',
+                cursor: 'pointer',
+                touchAction: 'none',
+                userSelect: 'none',
+              }}
+            >
+              {label}
+            </button>
+            {isUiCloseable(ctx.registry[tab.component]) && (
+              <button
+                type="button"
+                data-twge-tab-close={tab.id}
+                aria-label={`Close ${textLabel(tab, ctx)}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void onCloseTab(tab, anchorOf(e.currentTarget));
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'inherit',
+                  font: 'inherit',
+                  cursor: 'pointer',
+                  padding: '0 8px',
+                  touchAction: 'none',
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
         );
       })}
+      <button
+        type="button"
+        data-twge-add
+        aria-label="Add tab"
+        aria-haspopup="menu"
+        disabled={addable.length === 0}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => setMenu({ kind: 'add', anchor: anchorOf(e.currentTarget) })}
+        style={{
+          border: 'none',
+          background: 'transparent',
+          color: 'inherit',
+          font: 'inherit',
+          cursor: addable.length === 0 ? 'default' : 'pointer',
+          opacity: addable.length === 0 ? 0.5 : 1,
+          padding: '0 10px',
+          touchAction: 'none',
+        }}
+      >
+        +
+      </button>
+
+      {menu?.kind === 'add' && (
+        <AddMenu container={container} ctx={ctx} anchor={menu.anchor} onClose={closeMenu} />
+      )}
+      {menuTab && menu && (
+        <TabContextMenu
+          container={container}
+          tab={menuTab}
+          ctx={ctx}
+          anchor={menu.anchor}
+          onClose={closeMenu}
+          onCloseTab={(tab, anchor) => void onCloseTab(tab, anchor)}
+        />
+      )}
+      {menu?.kind === 'force' && (
+        <Popover anchor={menu.anchor} onClose={closeMenu}>
+          <div style={{ padding: '6px 10px', maxWidth: 220 }}>
+            “{menu.label}” could not confirm it is safe to close.
+          </div>
+          <MenuItem
+            onSelect={() => {
+              ctx.engine.removeTab(menu.tabId);
+              closeMenu();
+            }}
+          >
+            Force close
+          </MenuItem>
+          <MenuItem onSelect={closeMenu}>Cancel</MenuItem>
+        </Popover>
+      )}
     </div>
   );
 }

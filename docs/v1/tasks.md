@@ -56,11 +56,11 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] 5 zones + preview; outer border resolves to underlying edge
   - [x] reorder; tabify + source collapse; edge split 50/50; `Esc` cancels
   - [x] no live relayout on `pointermove`; no `mousedown`/`mousemove`
-- [ ] **07 — Tab menu, add/close guards**
-  - [ ] `+` always rendered, filtered by `addable`, disabled when none
-  - [ ] §9.7 `canClose` false aborts; rejection → force close
-  - [ ] close-others/all skip non-closeable + `allowMultiple:false`
-  - [ ] rename writes `Tab.title`; `titleEditable:false` hides
+- [x] **07 — Tab menu, add/close guards**
+  - [x] `+` always rendered, filtered by `addable`, disabled when none
+  - [x] §9.7 `canClose` false aborts; rejection → force close
+  - [x] close-others/all skip non-closeable + `allowMultiple:false`
+  - [x] rename writes `Tab.title`; `titleEditable:false` hides
 - [ ] **08 — Tab color**
   - [ ] hex validation; invalid ignored + fallthrough (§9.5)
   - [ ] resolution `tab.color → defaultColor → --twge-tab-accent`; pip + color-mix + underline
