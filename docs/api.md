@@ -1,5 +1,9 @@
 # API — `@t-works/react-grid-engine`
 
+> New to the library? Start with the developer guide: [`user/README.md`](./user/README.md)
+> (tutorial), [`user/recipes.md`](./user/recipes.md) (how-to) and
+> [`user/design.md`](./user/design.md) (why the API is shaped this way).
+
 The consumer contract. Hand-written, reviewed alongside the code: **any public type
 change needs an update here in the same commit.** Sources of truth are
 [`prd.md`](./prd.md) §5.1, §5.2, §6.5 and the frozen types in
@@ -110,6 +114,7 @@ mount; every later write goes through the ref handle (no controlled `layout` pro
   ref={engineRef}                     // GridEngineHandle
   defaultLayout={layout}              // Layout — read once, on mount
   registry={registry}                 // Record<string, PanelComponentDef> — never serialized
+  onLayoutChange={(layout, meta) => {}}              // optional — once per committed change
   onTabEvent={(tabId, type, payload) => {}}          // optional
   onTabConfigChange={(tabId, config, meta) => {}}    // optional
   onTabColorChange={(tabId, color, meta) => {}}      // optional — meta.source is 'ui' | 'app'
