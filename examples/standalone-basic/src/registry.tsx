@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import type { PanelComponentProps, PanelRegistry } from '@t-works/react-grid-engine';
 
 const box: CSSProperties = { padding: 12, font: '13px system-ui, sans-serif' };
@@ -54,4 +55,24 @@ export const guardRegistry: PanelRegistry = {
     closeable: false,
     titleEditable: false,
   },
+};
+
+/**
+ * Expand fixture, behind `?expand`: a stateful panel, so `e2e/expand.spec.ts`
+ * can prove the overlay does not remount the tab component.
+ */
+function Counter() {
+  const [n, setN] = useState(0);
+  return (
+    <div style={box}>
+      <button data-twge-counter type="button" onClick={() => setN((v) => v + 1)}>
+        count: {n}
+      </button>
+    </div>
+  );
+}
+
+export const expandRegistry: PanelRegistry = {
+  ...registry,
+  counter: { component: Counter, title: () => 'Counter' },
 };

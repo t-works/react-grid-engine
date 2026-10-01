@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { ContainerNode, Tab } from '../layout/types';
-import type { ChromeCtx } from './Container';
+import type { ChromeCtx, ExpandMode } from './Container';
 import { chrome, panelDomId, tabDomId } from './styles';
 import { resolveTabColor } from '../color';
 import {
@@ -20,6 +20,60 @@ type MenuState =
   | { kind: 'tab'; tabId: string; anchor: MenuAnchor }
   | { kind: 'force'; tabId: string; label: string; anchor: MenuAnchor }
   | null;
+
+/** 14 px inline SVGs (FR-23: no icon dependency, no glyph font). */
+const Svg = ({ children }: { children: ReactNode }) => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    {children}
+  </svg>
+);
+
+const IconMaximize = (): ReactElement => (
+  <Svg>
+    <path d="M2 5V2h3" />
+    <path d="M12 9v3H9" />
+  </Svg>
+);
+const IconRestore = (): ReactElement => (
+  <Svg>
+    <path d="M5 2v3H2" />
+    <path d="M9 12V9h3" />
+  </Svg>
+);
+const IconFullscreen = (): ReactElement => (
+  <Svg>
+    <path d="M2 5V2h3" />
+    <path d="M12 5V2H9" />
+    <path d="M2 9v3h3" />
+    <path d="M12 9v3H9" />
+  </Svg>
+);
+const IconExitFullscreen = (): ReactElement => (
+  <Svg>
+    <path d="M2 2l4 4" />
+    <path d="M2 6h4V2" />
+    <path d="M12 12l-4-4" />
+    <path d="M12 8H8v4" />
+  </Svg>
+);
+
+interface ExpandControl {
+  mode: ExpandMode;
+  visible: boolean;
+  labels: [string, string];
+  Idle: () => ReactElement;
+  Exit: () => ReactElement;
+}
 
 const labelOf = (tab: Tab, ctx: ChromeCtx): ReactNode =>
   tab.title ?? ctx.registry[tab.component]?.title?.(tab.config) ?? tab.component;
@@ -47,6 +101,28 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
   };
 
   const menuTab = menu?.kind === 'tab' ? container.tabs.find((t) => t.id === menu.tabId) : undefined;
+
+  // "Visible or active": a hidden mode stays escapable when a host flips the
+  // prop while its overlay is open. The first rendered button takes the auto
+  // margin, so the pair stays right-aligned either way.
+  const expandMode = ctx.expanded?.containerId === container.id ? ctx.expanded.mode : null;
+  const allExpandControls: ExpandControl[] = [
+    {
+      mode: 'maximize',
+      visible: ctx.showMaximizeButton,
+      labels: ['Maximize', 'Restore'],
+      Idle: IconMaximize,
+      Exit: IconRestore,
+    },
+    {
+      mode: 'fullscreen',
+      visible: ctx.showFullscreenButton,
+      labels: ['Full screen', 'Exit full screen'],
+      Idle: IconFullscreen,
+      Exit: IconExitFullscreen,
+    },
+  ];
+  const expandControls = allExpandControls.filter((c) => c.visible || expandMode === c.mode);
 
   return (
     <div
@@ -177,6 +253,38 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
       >
         +
       </button>
+
+      {expandControls.map((control, i) => {
+        const exit = expandMode === control.mode;
+        const label = control.labels[exit ? 1 : 0];
+        return (
+          <button
+            key={control.mode}
+            type="button"
+            data-twge-expand={control.mode}
+            data-twge-container-button={container.id}
+            aria-label={label}
+            aria-pressed={exit}
+            title={label}
+            onClick={(e) => {
+              e.stopPropagation();
+              ctx.toggleExpand(container.id, control.mode);
+            }}
+            style={{
+              marginLeft: i === 0 ? 'auto' : undefined,
+              border: 'none',
+              background: 'transparent',
+              color: 'inherit',
+              font: 'inherit',
+              cursor: 'pointer',
+              padding: '0 4px',
+              touchAction: 'none',
+            }}
+          >
+            {exit ? <control.Exit /> : <control.Idle />}
+          </button>
+        );
+      })}
 
       {menu?.kind === 'add' && (
         <AddMenu container={container} ctx={ctx} anchor={menu.anchor} onClose={closeMenu} />

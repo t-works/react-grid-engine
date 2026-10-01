@@ -119,6 +119,8 @@ mount; every later write goes through the ref handle (no controlled `layout` pro
   onTabConfigChange={(tabId, config, meta) => {}}    // optional
   onTabColorChange={(tabId, color, meta) => {}}      // optional — meta.source is 'ui' | 'app'
   tabColorPalette={['#e11', '#0af']}                 // optional swatches; built-in presets when omitted
+  hideMaximize={false}                               // optional — hide "fill the engine area" buttons
+  hideFullscreen={false}                             // optional — hide "fill the viewport" buttons
   className="workspace"
   style={{ height: '100vh' }}
 />
@@ -127,6 +129,13 @@ mount; every later write goes through the ref handle (no controlled `layout` pro
 The root fills its host 100% × 100% and carries no stylesheet: a container's title bar, borders,
 gaps, padding and tab colors all read `--twge-*` variables (defaults below). A `component` key
 missing from the registry renders a placeholder and the tab node is retained.
+
+Each title bar ends with two expand controls: **maximize** fills the engine root, **fullscreen**
+fills the viewport (above host page chrome, per `--twge-overlay-z-index`). The overlay is transient
+presentation only — the tab component is not remounted (state survives, including a mode switch),
+nothing is serialized, and no `onLayoutChange` fires. The active control collapses it again;
+`hideMaximize` / `hideFullscreen` hide the controls, but the active one still renders so an open
+overlay is never trapped.
 
 ## `GridEngineHandle`
 
@@ -319,6 +328,7 @@ carries none of them.
 | `--twge-tab-accent` | theme default accent — "no color" |
 | `--twge-drop-bg` | drop-preview fill |
 | `--twge-drop-border-color` | drop-preview outline |
+| `--twge-overlay-z-index` | stacking order of the `fullscreen` overlay vs host page chrome (default `9999`) |
 | `--twge-tab-color-<name>` | built-in preset swatches (e.g. `--twge-tab-color-red`) |
 
 `color-mix(in oklab, …)` and `<input type="color">` are assumed available (PRD §8).

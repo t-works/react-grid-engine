@@ -3,7 +3,7 @@ import { GridEngine, parseLayout, serializeLayout } from '@t-works/react-grid-en
 import type { Layout } from '@t-works/react-grid-engine';
 import layoutJson from './layout.json';
 import { flatLayout, perfLayout } from './fixtures';
-import { guardRegistry, registry } from './registry';
+import { expandRegistry, guardRegistry, registry } from './registry';
 
 /**
  * `standalone-basic` — static JSON layout, tabs, add/close and tab color (task
@@ -18,7 +18,16 @@ const defaultLayout = layoutJson as Layout;
 export default function App() {
   const params = new URLSearchParams(window.location.search);
   const guards = params.has('guards');
-  const mode = params.has('perf') ? 'perf' : params.has('flat') ? 'flat' : guards ? 'guards' : '';
+  const expand = params.has('expand');
+  const mode = params.has('perf')
+    ? 'perf'
+    : params.has('flat')
+      ? 'flat'
+      : guards
+        ? 'guards'
+        : expand
+          ? 'expand'
+          : '';
   const fallback = mode === 'perf' ? perfLayout : mode === 'flat' ? () => flatLayout : () => defaultLayout;
   const storageKey = `react-grid-engine:standalone-basic${mode ? `:${mode}` : ''}`;
 
@@ -33,7 +42,7 @@ export default function App() {
     <div style={{ height: '100vh' }} data-twge-layout={json}>
       <GridEngine
         defaultLayout={initial}
-        registry={guards ? guardRegistry : registry}
+        registry={guards ? guardRegistry : expand ? expandRegistry : registry}
         onLayoutChange={(layout) => {
           const next = serializeLayout(layout);
           localStorage.setItem(storageKey, next);

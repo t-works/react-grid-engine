@@ -31,7 +31,7 @@ import {
   setTabConfig as setTabConfigOp,
   updateTab as updateTabOp,
 } from './layout/ops';
-import type { ChromeCtx } from './chrome/Container';
+import type { ChromeCtx, ExpandMode, ExpandState } from './chrome/Container';
 import { Container } from './chrome/Container';
 import { Split } from './chrome/Split';
 import { Splitter } from './chrome/Splitter';
@@ -51,6 +51,10 @@ export interface GridEngineProps {
   onTabColorChange?: TabColorChangeHandler;
   /** Preset swatches for the tab-color popover. Defaults to the themed set. */
   tabColorPalette?: readonly string[];
+  /** Hides the "maximize" control (fill the engine area). Default false. */
+  hideMaximize?: boolean;
+  /** Hides the "fullscreen" control (fill the browser viewport). Default false. */
+  hideFullscreen?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -65,6 +69,8 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
     onTabConfigChange,
     onTabColorChange,
     tabColorPalette,
+    hideMaximize,
+    hideFullscreen,
     className,
     style,
   },
@@ -73,6 +79,9 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
   const [layout, setLayout] = useState<Layout>(() => parseLayout(defaultLayout, defaultLayout));
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
+
+  // Transient view state, like `revsRef`: runtime only, never a layout write.
+  const [expanded, setExpanded] = useState<ExpandState | null>(null);
 
   // Latest props/callbacks, read by the stable handle (created once).
   const registryRef = useRef(registry);
@@ -226,6 +235,13 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
     tabColorPalette,
     gesture: asGesture,
     getRev: (tabId) => revsRef.current.get(tabId) ?? 0,
+    expanded,
+    toggleExpand: (containerId: string, mode: ExpandMode) =>
+      setExpanded((prev) =>
+        prev?.containerId === containerId && prev.mode === mode ? null : { containerId, mode },
+      ),
+    showMaximizeButton: !hideMaximize,
+    showFullscreenButton: !hideFullscreen,
     resize: (splitId, index, weight) =>
       asGesture(() =>
         applyChange(resizeSplitOp(layoutRef.current, splitId, index, weight), {

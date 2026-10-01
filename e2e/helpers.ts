@@ -35,3 +35,8 @@ export const preview = (page: Page): Locator => page.locator('[data-twge-drop-pr
 export const sprite = (page: Page): Locator => page.locator('[data-twge-drag-sprite]');
 /** The fixture mirrors the current wire format here (task 12). */
 export const jsonAttr = (page: Page): Locator => page.locator('[data-twge-layout]');
+
+/** Expand (docs/feat/expand.md): one container's button, and the live overlay. */
+export const expandButton = (page: Page, id: string, mode: 'maximize' | 'fullscreen'): Locator =>
+  page.locator(`[data-twge-expand="${mode}"][data-twge-container-button="${id}"]`);
+export const expandedContainer = (page: Page): Locator => page.locator('[data-twge-expanded]');
