@@ -1,5 +1,6 @@
 {
   "name": "@t-works/react-grid-engine",
+  "description": "Dockable, tabbed panel layout for React",
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
