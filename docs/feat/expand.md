@@ -1,6 +1,6 @@
 # Expand active tab
 
-> **Status:** design, not implemented.
+> **Status:** implemented (unit + e2e coverage in `test/expand.test.tsx`, `e2e/expand.spec.ts`).
 > **Goal:** two controls at the right of every container's title bar promote that container
 > (its active tab) to fill either the **engine's own area** (`maximize`) or the **whole page**
 > (`fullscreen`), as an overlay. The active control doubles as the collapse control at the top-right
