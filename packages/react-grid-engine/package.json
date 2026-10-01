@@ -4,6 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t-works/react-grid-engine.git",
+    "directory": "packages/react-grid-engine"
+  },
+  "homepage": "https://github.com/t-works/react-grid-engine#readme",
+  "bugs": "https://github.com/t-works/react-grid-engine/issues",
   "files": ["dist"],
   "sideEffects": false,
   "exports": {
