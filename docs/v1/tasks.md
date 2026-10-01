@@ -66,24 +66,37 @@ Each feature **depends on** the one above it; do not start a box before its depe
   - [x] resolution `tab.color → defaultColor → --twge-tab-accent`; pip + color-mix + underline
   - [x] popover swatches / Custom / Default; §9.6 `onTabColorChange` before persistence
   - [x] `null` clears, `undefined` does not
-- [ ] **09 — Events + `rev` + ref API**
-  - [ ] 4 callbacks after commit; `onLayoutChange` once per change + `LayoutAction`
-  - [ ] stale `rev` ignored; no echo; revs not serialized
-  - [ ] full handle; missing id no-ops; §9.4 stable id across save/load
-- [ ] **10 — `props.engine` guarantee**
-  - [ ] §9.10 memoized tab does not re-render on sibling move/resize/color
-  - [ ] handle identity stable across those changes; no context provider
-- [ ] **11 — Example apps**
-  - [ ] `standalone-basic` static JSON + colors, no drag
-  - [ ] `standalone-dashboard` full drag + localStorage persistence
-  - [ ] `standalone-plugins` unknown key + `canClose` guard
-- [ ] **12 — Playwright drag flows**
-  - [ ] §9.1 tree `row[column[c1,c2],c3]` + identical JSON reload
-  - [ ] §9.2 50% sibling, 100% fill; §9.3 last-tab collapse, no gaps
-  - [ ] splitter floor; `Esc` cancel; previews
-- [ ] **13 — Performance smoke**
-  - [ ] §9.9 20/80 StrictMode clean; inactive content not re-rendered
-  - [ ] results recorded with the perceived-speed caveat
+- [x] **09 — Events + `rev` + ref API**
+  - [x] 4 callbacks after commit; `onLayoutChange` once per change + `LayoutAction`
+  - [x] stale `rev` ignored; no echo; revs not serialized
+  - [x] full handle; missing id no-ops; §9.4 stable id across save/load
+- [x] **10 — `props.engine` guarantee** — memoized tabs stay put
+  - [x] §9.10 memoized tab does not re-render on sibling move/resize/color (`test/engineHandle.test.tsx`)
+  - [x] handle identity stable across those changes; no context provider (source scan test)
+  - [x] fixed the actual re-render source: `PanelHost` handed fresh `emit`/`requestConfigChange`
+        closures every render, so `React.memo` never matched — slots are now memoized with per-tab
+        `useCallback`s and a latest-`ctx` ref
+- [x] **11 — Example apps** — data first: each layout is a `layout.json` replayed through the real wire format
+  - [x] `standalone-basic` — static JSON + colors (one tab colored on the wire, one via registry
+        `defaultColor`), add/close/tab color; no drag plumbing
+  - [x] `standalone-dashboard` — full drag/drop + splitters, three component types, `onLayoutChange`
+        persisted via `serializeLayout` and reloaded via `parseLayout` (`localStorage` round-trip,
+        `e2e/persistence.spec.ts`); the `onTabEvent` emitter/echo demo now lives here and
+        `e2e/events.spec.ts` drives it (Playwright serves the dashboard on `5174` next to
+        `standalone-basic` on `5173`)
+  - [ ] `standalone-plugins` — **deferred** (feature file: "later"); its `canClose` (§9.7) and
+        unknown-key placeholder (§9.8) criteria are covered by the basic `?guards` fixture and the
+        dashboard's `forecast` tab
+- [x] **12 — Playwright drag flows** — gates live in `e2e/` (the config is at the root; the
+      feature file's `test/browser/` is the same idea, this repo already used `e2e/`)
+  - [x] §9.1 tree `row[column[c1,c2],c3]` + identical JSON reload (`e2e/flows.spec.ts`, `?flat` fixture)
+  - [x] §9.2 50% sibling, 100% fill; §9.3 last-tab collapse, no gaps
+  - [x] splitter floor; `Esc` cancel (byte-identical wire format); previews (center vs edge vs gap
+        fallthrough)
+- [x] **13 — Performance smoke**
+  - [x] §9.9 20/80 StrictMode clean; inactive content not re-rendered
+        (`test/perf.test.tsx`: no legacy warnings / NaN / hydration mismatch; `e2e/perf.spec.ts`)
+  - [x] results recorded with the perceived-speed caveat (`docs/v1/perf.md`)
 
 ## v1 done when
 
