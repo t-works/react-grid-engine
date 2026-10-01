@@ -22,6 +22,8 @@ export interface ChromeCtx {
   onTabColorChange: TabColorChangeHandler | undefined;
   /** Swatches the tab-color popover offers; built-in presets when absent. */
   tabColorPalette: readonly string[] | undefined;
+  /** Run a chrome mutation as a user gesture, so it reports `programmatic: false`. */
+  gesture: <T>(fn: () => T) => T;
   /** Current config revision for a tab (§5.2). */
   getRev: (tabId: string) => number;
   /**

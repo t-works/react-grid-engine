@@ -101,7 +101,7 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
               aria-controls={panelDomId(tab.id)}
               tabIndex={active ? 0 : -1}
               title={typeof label === 'string' ? label : undefined}
-              onClick={() => ctx.engine.focusTab(tab.id)}
+              onClick={() => ctx.gesture(() => ctx.engine.focusTab(tab.id))}
               onContextMenu={(e) => {
                 e.preventDefault();
                 setMenu({ kind: 'tab', tabId: tab.id, anchor: { x: e.clientX, y: e.clientY } });
@@ -198,7 +198,7 @@ export function TitleBar({ container, ctx }: { container: ContainerNode; ctx: Ch
           </div>
           <MenuItem
             onSelect={() => {
-              ctx.engine.removeTab(menu.tabId);
+              ctx.gesture(() => ctx.engine.removeTab(menu.tabId));
               closeMenu();
             }}
           >

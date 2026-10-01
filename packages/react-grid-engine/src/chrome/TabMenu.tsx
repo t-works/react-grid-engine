@@ -34,7 +34,7 @@ export function uiCloseableTabs(container: ContainerNode, ctx: ChromeCtx, except
 
 /** Unconditional removals — the "close others/all" path (FR-11, A14). */
 export function closeTabs(tabs: readonly Tab[], ctx: ChromeCtx): void {
-  tabs.forEach((tab) => ctx.engine.removeTab(tab.id));
+  tabs.forEach((tab) => ctx.gesture(() => ctx.engine.removeTab(tab.id)));
 }
 
 export type CloseResult = 'closed' | 'blocked' | 'rejected';
@@ -57,7 +57,7 @@ export async function requestTabClose(tab: Tab, ctx: ChromeCtx): Promise<CloseRe
     }
     if (!ok) return 'blocked';
   }
-  ctx.engine.removeTab(tab.id);
+  ctx.gesture(() => ctx.engine.removeTab(tab.id));
   return 'closed';
 }
 
@@ -197,7 +197,9 @@ export function AddMenu({
         <MenuItem
           key={key}
           onSelect={() => {
-            ctx.engine.addTab({ component: key, target: { kind: 'tab', containerId: container.id } });
+            ctx.gesture(() =>
+              ctx.engine.addTab({ component: key, target: { kind: 'tab', containerId: container.id } }),
+            );
             onClose();
           }}
         >
@@ -234,7 +236,7 @@ export function TabContextMenu({
 
   if (mode === 'rename') {
     const commit = (): void => {
-      ctx.engine.updateTab(tab.id, { title: draft });
+      ctx.gesture(() => ctx.engine.updateTab(tab.id, { title: draft }));
       onClose();
     };
     return (
@@ -316,7 +318,7 @@ export function ColorMenu({
 }) {
   const swatches = colorSwatches(ctx.tabColorPalette);
   const apply = (color: string | null, close: boolean): void => {
-    ctx.engine.updateTab(tab.id, { color });
+    ctx.gesture(() => ctx.engine.updateTab(tab.id, { color }));
     ctx.onTabColorChange?.(tab.id, color, { source: 'ui' });
     if (close) onClose();
   };

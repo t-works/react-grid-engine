@@ -12,6 +12,7 @@ import type {
   ContainerNode,
   DropTarget,
   GridEngineHandle,
+  GridEngineProps,
   Layout,
   LayoutAction,
   LayoutChangeHandler,
@@ -130,6 +131,9 @@ const allActions: LayoutAction[] = [
   'set-config',
 ];
 type _ev5 = Expect<Equal<LayoutAction, (typeof allActions)[number]>>;
+
+type _ev6 = Expect<Equal<GridEngineProps['onLayoutChange'], LayoutChangeHandler | undefined>>;
+type _ev7 = Expect<Equal<LayoutChangeMeta['programmatic'], boolean>>;
 
 const allTargets: DropTarget[] = [
   { kind: 'tab', containerId: 'c', index: 0 },

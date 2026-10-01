@@ -8,6 +8,8 @@ import { forwardRef, Fragment, useImperativeHandle, useRef, useState } from 'rea
 import type { CSSProperties } from 'react';
 import type {
   GridEngineHandle,
+  LayoutChangeHandler,
+  LayoutChangeMeta,
   TabColorChangeHandler,
   TabConfigChangeHandler,
   TabEventHandler,
@@ -18,6 +20,8 @@ import { createId } from './ids';
 import { parseLayout } from './layout/serialize';
 import {
   addTab as addTabOp,
+  defaultTarget,
+  findTab,
   focusTab as focusTabOp,
   moveContainer as moveContainerOp,
   moveTab as moveTabOp,
@@ -40,6 +44,8 @@ export interface GridEngineProps {
   defaultLayout: Layout;
   /** App-supplied catalogue, never serialized (FR-16). */
   registry: PanelRegistry;
+  /** Fires once per committed change, after the layout is updated (FR-18). */
+  onLayoutChange?: LayoutChangeHandler;
   onTabEvent?: TabEventHandler;
   onTabConfigChange?: TabConfigChangeHandler;
   onTabColorChange?: TabColorChangeHandler;
@@ -54,6 +60,7 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
   {
     defaultLayout,
     registry,
+    onLayoutChange,
     onTabEvent,
     onTabConfigChange,
     onTabColorChange,
@@ -70,15 +77,36 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
   // Latest props/callbacks, read by the stable handle (created once).
   const registryRef = useRef(registry);
   registryRef.current = registry;
-  const callbacksRef = useRef({ onTabEvent, onTabConfigChange });
-  callbacksRef.current = { onTabEvent, onTabConfigChange };
-  /** Monotonic config revision per tab (§5.2). Runtime-only. */
+  const callbacksRef = useRef({ onLayoutChange, onTabEvent, onTabConfigChange });
+  callbacksRef.current = { onLayoutChange, onTabEvent, onTabConfigChange };
+  /** Monotonic config revision per tab (§5.2). Runtime-only, never serialized. */
   const revsRef = useRef(new Map<string, number>());
+  /** True while a user gesture (pointer, menu) drives the handle, not the ref API. */
+  const gestureRef = useRef(false);
 
   const engineRef = useRef<GridEngineHandle | null>(null);
-  const commit = (next: Layout): void => {
+  /**
+   * Commit a reducer result and report it. A no-op (same layout reference)
+   * fires nothing — that is what keeps an unknown id or a stale call silent
+   * (§9.8). `onLayoutChange` runs after the commit, once per change, never
+   * during render and never per `pointermove`.
+   */
+  const applyChange = (next: Layout, meta: Omit<LayoutChangeMeta, 'programmatic'>): void => {
+    if (next === layoutRef.current) return;
     layoutRef.current = next;
     setLayout(next);
+    callbacksRef.current.onLayoutChange?.(next, { ...meta, programmatic: !gestureRef.current });
+  };
+
+  /** Run `fn` as a user gesture, so its commits report `programmatic: false`. */
+  const asGesture = <T,>(fn: () => T): T => {
+    const prev = gestureRef.current;
+    gestureRef.current = true;
+    try {
+      return fn();
+    } finally {
+      gestureRef.current = prev;
+    }
   };
   if (engineRef.current === null) {
     engineRef.current = {
@@ -90,39 +118,82 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
         };
         if (p.title !== undefined) tab.title = p.title;
         if (p.color !== undefined) tab.color = p.color;
-        const splitting = p.target?.kind === 'split';
-        commit(
+        const target = p.target ?? defaultTarget(layoutRef.current);
+        const splitting = target.kind === 'split';
+        const newContainerId = splitting ? createId() : undefined;
+        const newSplitId = splitting ? createId() : undefined;
+        applyChange(
           addTabOp(layoutRef.current, tab, {
-            target: p.target,
+            target,
             activate: p.activate,
-            newContainerId: splitting ? createId() : undefined,
-            newSplitId: splitting ? createId() : undefined,
+            newContainerId,
+            newSplitId,
           }),
+          {
+            action: splitting ? 'split' : 'add-tab',
+            tabId: tab.id,
+            containerId:
+              target.kind === 'split'
+                ? newContainerId
+                : target.kind === 'tab'
+                  ? target.containerId
+                  : undefined,
+          },
         );
         return tab.id;
       },
       removeTab(id) {
-        commit(removeTabOp(layoutRef.current, id));
+        applyChange(removeTabOp(layoutRef.current, id), { action: 'remove-tab', tabId: id });
       },
       updateTab(id, patch) {
-        commit(updateTabOp(layoutRef.current, id, patch));
+        if (patch.title === undefined && patch.color === undefined) return;
+        applyChange(updateTabOp(layoutRef.current, id, patch), {
+          action: patch.title !== undefined ? 'set-title' : 'set-color',
+          tabId: id,
+        });
       },
       moveTab(id, target) {
-        commit(
+        const location = findTab(layoutRef.current.root, id);
+        const splitting = target.kind === 'split';
+        applyChange(
           moveTabOp(layoutRef.current, id, target, {
-            newContainerId: target.kind === 'split' ? createId() : undefined,
-            newSplitId: target.kind === 'split' ? createId() : undefined,
+            newContainerId: splitting ? createId() : undefined,
+            newSplitId: splitting ? createId() : undefined,
           }),
+          {
+            action: splitting
+              ? 'split'
+              : target.kind === 'tab' && location?.container.id === target.containerId
+                ? 'reorder-tab'
+                : 'move-tab',
+            tabId: id,
+          },
         );
       },
       setTabConfig(id, config, rev) {
         const current = revsRef.current.get(id) ?? 0;
         if (rev !== undefined && rev <= current) return;
-        revsRef.current.set(id, rev ?? current + 1);
-        commit(setTabConfigOp(layoutRef.current, id, config));
+        const next = setTabConfigOp(layoutRef.current, id, config);
+        if (next === layoutRef.current) return;
+        const nextRev = rev ?? current + 1;
+        revsRef.current.set(id, nextRev);
+        applyChange(next, { action: 'set-config', tabId: id });
+        callbacksRef.current.onTabConfigChange?.(id, config, { rev: nextRev, source: 'app' });
       },
       focusTab(id) {
-        commit(focusTabOp(layoutRef.current, id));
+        const location = findTab(layoutRef.current.root, id);
+        if (
+          location &&
+          layoutRef.current.activeContainerId === location.container.id &&
+          location.container.activeTabId === id
+        ) {
+          return;
+        }
+        applyChange(focusTabOp(layoutRef.current, id), {
+          action: 'focus',
+          tabId: id,
+          containerId: location?.container.id,
+        });
       },
       getLayout() {
         return layoutRef.current;
@@ -134,14 +205,16 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
 
   const rootRef = useRef<HTMLDivElement>(null);
   const drag = useDrag(rootRef, {
-    onDropTab: (tabId, target) => engine.moveTab(tabId, target),
-    onDropContainer: (containerId, target) => {
-      commit(
-        moveContainerOp(layoutRef.current, containerId, target, {
-          newSplitId: target.kind === 'split' ? createId() : undefined,
-        }),
-      );
-    },
+    onDropTab: (tabId, target) => asGesture(() => engine.moveTab(tabId, target)),
+    onDropContainer: (containerId, target) =>
+      asGesture(() =>
+        applyChange(
+          moveContainerOp(layoutRef.current, containerId, target, {
+            newSplitId: target.kind === 'split' ? createId() : undefined,
+          }),
+          { action: target.kind === 'split' ? 'split' : 'move-tab', containerId },
+        ),
+      ),
   });
 
   const ctx: ChromeCtx = {
@@ -151,10 +224,15 @@ export const GridEngine = forwardRef<GridEngineHandle, GridEngineProps>(function
     onTabConfigChange,
     onTabColorChange,
     tabColorPalette,
+    gesture: asGesture,
     getRev: (tabId) => revsRef.current.get(tabId) ?? 0,
-    resize: (splitId, index, weight) => {
-      commit(resizeSplitOp(layoutRef.current, splitId, index, weight));
-    },
+    resize: (splitId, index, weight) =>
+      asGesture(() =>
+        applyChange(resizeSplitOp(layoutRef.current, splitId, index, weight), {
+          action: 'resize',
+          containerId: splitId,
+        }),
+      ),
   };
 
   return (
