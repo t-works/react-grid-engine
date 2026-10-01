@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "activeContainerId": "revenue",
+  "root": {
+    "type": "split",
+    "id": "root",
+    "axis": "row",
+    "children": [
+      {
+        "type": "split",
+        "id": "left-column",
+        "axis": "column",
+        "weight": 2,
+        "children": [
+          {
+            "type": "container",
+            "id": "revenue",
+            "weight": 1,
+            "activeTabId": "revenue-30d",
+            "tabs": [
+              {
+                "id": "revenue-30d",
+                "component": "chart",
+                "title": "Revenue · 30d",
+                "color": "#0ea5e9",
+                "config": { "metric": "revenue", "range": "30d" }
+              },
+              {
+                "id": "revenue-7d",
+                "component": "chart",
+                "title": "Revenue · 7d",
+                "config": { "metric": "revenue", "range": "7d" }
+              }
+            ]
+          },
+          {
+            "type": "container",
+            "id": "traffic",
+            "weight": 1,
+            "activeTabId": "traffic-30d",
+            "tabs": [
+              {
+                "id": "traffic-30d",
+                "component": "chart",
+                "title": "Traffic · 30d",
+                "color": "#22c55e",
+                "config": { "metric": "sessions", "range": "30d" }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "id": "right",
+        "weight": 1,
+        "activeTabId": "rows",
+        "tabs": [
+          { "id": "rows", "component": "table", "title": "Rows", "config": { "page": 1 } },
+          { "id": "forecast", "component": "forecast", "title": "Forecast", "config": {} }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "activeContainerId": "c1",
+  "root": {
+    "type": "split",
+    "id": "s0",
+    "axis": "row",
+    "children": [
+      {
+        "type": "split",
+        "id": "s1",
+        "axis": "column",
+        "weight": 1,
+        "children": [
+          {
+            "type": "container",
+            "id": "c1",
+            "weight": 1,
+            "activeTabId": "t1",
+            "tabs": [
+              {
+                "id": "t1",
+                "component": "welcome",
+                "title": "Welcome",
+                "color": "#0ea5e9",
+                "config": { "name": "Ada" }
+              }
+            ]
+          },
+          {
+            "type": "container",
+            "id": "c2",
+            "weight": 1,
+            "activeTabId": "t2",
+            "tabs": [{ "id": "t2", "component": "notes", "title": "Notes", "config": {} }]
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "id": "c3",
+        "weight": 1,
+        "activeTabId": "t3",
+        "tabs": [
+          {
+            "id": "t3",
+            "component": "notes",
+            "title": "Activity",
+            "color": "#f59e0b",
+            "config": {}
+          }
+        ]
+      }
+    ]
+  }
+}

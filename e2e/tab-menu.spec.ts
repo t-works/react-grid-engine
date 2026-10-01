@@ -113,7 +113,7 @@ test('close others skips closeable:false and allowMultiple:false tabs', async ({
   await addTab(page, 'c3', 'guarded');
   await expect(tabsIn(page, 'c3')).toHaveCount(4);
 
-  await tabIn(page, 'c3', 'Notes').click({ button: 'right' });
+  await tabIn(page, 'c3', 'Activity').click({ button: 'right' });
   await menuitem(page, 'Close others').click();
 
   await expect(tabsIn(page, 'c3')).toHaveCount(3);
@@ -126,21 +126,21 @@ test('close all skips closeable:false and allowMultiple:false tabs', async ({ pa
   await addTab(page, 'c3', 'locked');
   await addTab(page, 'c3', 'single');
 
-  await tabIn(page, 'c3', 'Notes').click({ button: 'right' });
+  await tabIn(page, 'c3', 'Activity').click({ button: 'right' });
   await menuitem(page, 'Close all').click();
 
   await expect(tabsIn(page, 'c3')).toHaveCount(2);
-  await expect(tabIn(page, 'c3', 'Notes')).toHaveCount(0);
+  await expect(tabIn(page, 'c3', 'Activity')).toHaveCount(0);
 });
 
 test('rename writes the tab title through the context menu', async ({ page }) => {
-  await tabIn(page, 'c3', 'Notes').click({ button: 'right' });
+  await tabIn(page, 'c3', 'Activity').click({ button: 'right' });
   await menuitem(page, 'Rename').click();
   await page.getByLabel('Tab title').fill('Renamed');
   await page.getByLabel('Tab title').press('Enter');
 
   await expect(tabIn(page, 'c3', 'Renamed')).toBeVisible();
-  await expect(tabIn(page, 'c3', 'Notes')).toHaveCount(0);
+  await expect(tabIn(page, 'c3', 'Activity')).toHaveCount(0);
 });
 
 test('closing a container\u2019s only tab removes the container', async ({ page }) => {
