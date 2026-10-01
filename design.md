@@ -2,8 +2,8 @@
 
 The API is shaped by a handful of decisions. This page explains each one — the problem it solves,
 the alternative that was rejected, and the consequence you will actually feel while building with
-the engine. The requirements behind them are in [`../prd.md`](../prd.md); the packaging/build
-choices are in [`../tech-spec.md`](../tech-spec.md).
+the engine. The requirements behind them are in [`../prd.md`](docs/prd.md); the packaging/build
+choices are in [`../tech-spec.md`](docs/tech-spec.md).
 
 - [Layout is JSON, not React state](#layout-is-json-not-react-state)
 - [Uncontrolled layout: one writer](#uncontrolled-layout-one-writer)
@@ -261,7 +261,7 @@ Some things are deliberately absent. They are decisions, not oversights:
 | Animated transitions | Visual polish, not layout correctness |
 | `minSize`, undo/redo, saved presets | Drag-and-resize clamps are relative; undo needs a history model the app may already own |
 | Fill-style tab colors | Drags in contrast handling (see above) |
-| A docs site / generated API reference | One hand-written [`../api.md`](../api.md) until it demonstrably drifts |
+| A docs site / generated API reference | One hand-written [`../api.md`](../../api.md) until it demonstrably drifts |
 
 If you hit one of these limits, the workaround is usually the handle: `addTab`, `moveTab`,
 `focusTab` and `updateTab` can express most programmatic intent without new engine features.

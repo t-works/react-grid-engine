@@ -1,12 +1,19 @@
+# What it is
+Dockable, tabbed panel layout for React: you hand it a **layout** (a plain JSON tree) and a
+**registry** (your components, keyed by string), and it renders resizable split areas with tab
+bars — drag tabs to re-dock, split, or stack them. Layout stays uncontrolled data, so it is
+serializable and driven from anywhere. ESM-only, zero runtime dependencies, client-side rendering.
+
+![](docs/Screenshot.png)
 # Using `@t-works/react-grid-engine`
 
 **Audience:** app developers embedding the engine. You should be comfortable with React
 function components, TypeScript and `useRef`.
 
-This folder is the learning material; [`../api.md`](../api.md) is the exhaustive reference
+This folder is the learning material; [`docs/api.md`](docs/api.md) is the exhaustive reference
 (every type, every field, the `--twge-*` table). Read this page once top-to-bottom for the
-mental model, then keep `../api.md` open while coding. The *why* behind the shape of the API
-lives in [`./design.md`](./design.md).
+mental model, then keep `docs/api.md` open while coding. The *why* behind the shape of the API
+lives in [`./design.md`](design.md).
 
 - [Install](#install)
 - [Five-minute example](#five-minute-example)
@@ -306,7 +313,7 @@ Writes go **through the handle**, reads come back through `onLayoutChange` / `ge
 would have to reconcile the app's copy with in-flight gestures every frame and invites feedback
 loops (engine writes → app state → engine re-renders with the write it just made). The cost is
 that *you* own persistence — which you wanted anyway, because that is the feature. The rationale
-and the alternatives considered are in [`./design.md`](./design.md#uncontrolled-layout-one-writer).
+and the alternatives considered are in [`./design.md`](design.md#uncontrolled-layout-one-writer).
 
 ---
 
@@ -314,8 +321,8 @@ and the alternatives considered are in [`./design.md`](./design.md#uncontrolled-
 
 | I want to… | Read |
 |---|---|
-| Install, serialize, restore, add tabs, guard closes, theme | [`./recipes.md`](./recipes.md) |
-| Understand *why* the API looks like this | [`./design.md`](./design.md) |
-| Look up an exact field, event or CSS variable | [`../api.md`](../api.md) |
+| Install, serialize, restore, add tabs, guard closes, theme | [`./recipes.md`](recipes.md) |
+| Understand *why* the API looks like this | [`./design.md`](design.md) |
+| Look up an exact field, event or CSS variable | [`../api.md`](../../api.md) |
 | See a full app with drag/drop and `localStorage` persistence | `examples/standalone-dashboard/` |
 | See a minimal static layout | `examples/standalone-basic/` |

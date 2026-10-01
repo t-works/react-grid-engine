@@ -9,7 +9,7 @@ import { GridEngine, parseLayout, serializeLayout } from '@t-works/react-grid-en
 import type { GridEngineHandle, Layout, PanelComponentProps, PanelRegistry } from '@t-works/react-grid-engine';
 ```
 
-Full reference: [`../api.md`](../api.md). Rationale: [`./design.md`](./design.md).
+Full reference: [`../api.md`](docs/api.md). Rationale: [`./design.md`](design.md).
 
 ---
 
@@ -54,7 +54,7 @@ export default function App() {
 
 **Why read once in `useState`?** `defaultLayout` is only parsed on mount; passing a freshly
 `parseLayout`-ed object every render would be ignored (and wasteful). See
-[uncontrolled layout](./design.md#uncontrolled-layout-one-writer).
+[uncontrolled layout](design.md#uncontrolled-layout-one-writer).
 
 ### Migrating and repairing on read
 
@@ -217,7 +217,7 @@ function Log({ tabId, emit }: PanelComponentProps) {
 write (and an `onLayoutChange`) just to signal. `emit` keeps the layout for layout.
 
 > The host → panel direction (imperative commands *into* a tab) is a v2 proposal:
-> [`../feat/imperative-events.md`](../feat/imperative-events.md).
+> [`../feat/imperative-events.md`](docs/feat/imperative-events.md).
 
 ---
 
@@ -253,7 +253,7 @@ Limit the popover with your own swatches (hex strings only):
 **Why an accent, not a fill?** A colored background forces a decision about text contrast that the
 engine cannot make without owning the theme. A pip, a 12 % tinted active tab and an underline
 carry the signal while text stays theme-controlled. See
-[Color](./design.md#color-is-an-accent-not-a-fill).
+[Color](design.md#color-is-an-accent-not-a-fill).
 
 ---
 
@@ -285,7 +285,7 @@ properties, so you theme it with plain CSS on any ancestor:
 </div>
 ```
 
-The full variable table is in [`../api.md`](../api.md). The
+The full variable table is in [`../api.md`](../../api.md). The
 `--twge-` prefix **is the public theming API** — renaming a variable is a breaking change.
 
 **Why no stylesheet?** Two apps with different themes can share one stored layout: the layout
@@ -382,4 +382,4 @@ const Chart = memo(function Chart({ engine, tabId }: PanelComponentProps) {
 ```
 
 This is the guarantee that makes handing the API to consumers safe
-([`./design.md#the-engine-handle-is-the-only-action-surface`](./design.md#the-engine-handle-is-the-only-action-surface)).
+([`./design.md#the-engine-handle-is-the-only-action-surface`](design.mdhe-engine-handle-is-the-only-action-surface)).
