@@ -1,8 +1,9 @@
 # CI/CD design
 
-> **Status:** design, not implemented. No `.github/` exists in this repo yet.
-> This file is the plan to review; the workflows below are sketches to be turned into
-> `.github/workflows/*.yml` once the questions at the bottom are answered.
+> **Status:** partly implemented — Workflow B (release) ships as `.github/workflows/release.yml`.
+> Workflows A (ci) and C (deploy) are still sketches below, to be turned into
+> `.github/workflows/*.yml` once the questions at the bottom are answered. Where a sketch and the
+> committed workflow disagree, the workflow is the truth.
 
 **Goal:** one place per concern —
 
@@ -120,7 +121,9 @@ jobs:
 
 ## 3. Workflow B — `release.yml` (publish the library)
 
-**Trigger:** `v*` tag push (preferred) or `workflow_dispatch` with an optional ref (Q2).
+**Trigger:** `v*` tag push. ~~or `workflow_dispatch` with an optional ref (Q2)~~ — dropped: the
+version guard reads `GITHUB_REF_NAME`, which on a dispatch run is the *branch*, so the guard would
+reject every dispatch. Re-run a failed publish from the Actions tab instead.
 **Registry:** public npm (Q1). **Provenance:** on (public repo, free), Q3.
 
 ```yaml
@@ -129,7 +132,6 @@ name: Release
 on:
   push:
     tags: ['v*']
-  workflow_dispatch:
 
 permissions:
   contents: read

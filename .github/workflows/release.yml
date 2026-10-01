@@ -1,0 +1,52 @@
+name: Release
+
+# Tag-only by design: the tag *is* the version (no changesets, see docs/feat/ci.md D7).
+# Re-run a failed run from the Actions tab; do not re-push the tag.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write # required for npm provenance
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: npm # optional: add required reviewers here to gate publishes
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24' # ships npm 11.x to match packageManager
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      # Never publish from a red tree (examples typecheck against the real dist).
+      - run: npm run lint
+      - run: npx turbo run build typecheck test
+
+      - name: Tag matches package version
+        run: |
+          pkg=$(node -p "require('./packages/react-grid-engine/package.json').version")
+          [ "${GITHUB_REF_NAME#v}" = "$pkg" ] || {
+            echo "::error::tag ${GITHUB_REF_NAME} does not match v$pkg"; exit 1; }
+
+      - name: Publish
+        run: npm publish -w packages/react-grid-engine --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        if: ${{ success() }}
+        run: |
+          echo "### Published \`@t-works/react-grid-engine@${GITHUB_REF_NAME#v}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://www.npmjs.com/package/@t-works/react-grid-engine" >> "$GITHUB_STEP_SUMMARY"
